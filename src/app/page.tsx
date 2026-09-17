@@ -1,22 +1,49 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuizStore } from '@/store/useQuizStore';
 import QuizEngine from '@/components/QuizEngine';
-import { Question } from '@/types/quiz';
-import { Trophy } from 'lucide-react';
-
 import { GEOGRAPHY_QUESTIONS } from '@/data/questions';
+import { Trophy, Share2, Check } from 'lucide-react';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 
 export default function Home() {
-  const { startQuiz, status, score, correctAnswersCount, questions, resetQuiz } = useQuizStore();
+  const { startQuiz, status, score, correctAnswersCount, questions, answers, resetQuiz } = useQuizStore();
+  const { playFinished } = useSoundEffects();
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Only start if not already playing or finished
     if (status === 'idle') {
       startQuiz(GEOGRAPHY_QUESTIONS);
     }
-  }, [status, startQuiz]);
+    if (status === 'finished') {
+      playFinished();
+    }
+  }, [status, startQuiz, playFinished]);
+
+  const generateShareText = () => {
+    const header = `🌍 World Explorer Trivia\nScore: ${score} 🥇 (${correctAnswersCount}/${questions.length})\n`;
+    
+    // Generate emoji grid (5 per row)
+    let grid = '';
+    answers.forEach((ans, idx) => {
+      grid += ans.isCorrect ? '🟩' : '🟥';
+      if ((idx + 1) % 5 === 0) grid += '\n';
+    });
+    
+    return `${header}\n${grid}\nPlay at: localhost:3000`;
+  };
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(generateShareText());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
 
   if (status === 'finished') {
     return (
@@ -29,21 +56,31 @@ export default function Home() {
           
           <div className="flex gap-8 my-6">
             <div className="flex flex-col items-center">
-              <span className="text-3xl font-bold text-[#00f2fe]">{score}</span>
+              <span className="text-4xl font-bold text-[#00f2fe]">{score}</span>
               <span className="text-sm text-slate-400 uppercase tracking-wider font-semibold">Total Score</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-3xl font-bold text-[#10b981]">{correctAnswersCount}/{questions.length}</span>
+              <span className="text-4xl font-bold text-[#10b981]">{correctAnswersCount}/{questions.length}</span>
               <span className="text-sm text-slate-400 uppercase tracking-wider font-semibold">Correct</span>
             </div>
           </div>
 
-          <button 
-            onClick={() => { resetQuiz(); startQuiz(GEOGRAPHY_QUESTIONS); }}
-            className="w-full bg-[#00f2fe] text-slate-950 font-bold text-lg py-4 rounded-xl hover:bg-[#00f2fe]/90 transition-colors"
-          >
-            Play Again
-          </button>
+          <div className="flex flex-col gap-3 w-full">
+            <button 
+              onClick={handleShare}
+              className="w-full glass-panel border-[#8a2be2]/50 bg-[#8a2be2]/10 text-[#8a2be2] font-bold text-lg py-4 flex items-center justify-center gap-2 hover:bg-[#8a2be2]/20 transition-colors"
+            >
+              {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+              {copied ? 'Copied to Clipboard!' : 'Share Results'}
+            </button>
+
+            <button 
+              onClick={() => { resetQuiz(); startQuiz(GEOGRAPHY_QUESTIONS); }}
+              className="w-full bg-[#00f2fe] text-slate-950 font-bold text-lg py-4 rounded-xl hover:bg-[#00f2fe]/90 transition-colors"
+            >
+              Play Again
+            </button>
+          </div>
         </div>
       </main>
     );

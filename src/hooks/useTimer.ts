@@ -32,5 +32,9 @@ export const useTimer = (initialSeconds: number, onExpire: () => void) => {
     setTimeLeft(newInitialSeconds ?? initialSeconds);
   }, [initialSeconds]);
 
-  return { timeLeft, isRunning, startTimer, stopTimer, resetTimer };
+  const addTime = useCallback((seconds: number) => {
+    setTimeLeft((prev) => prev + seconds);
+  }, []);
+
+  return { timeLeft, isRunning, startTimer, stopTimer, resetTimer, addTime };
 };
