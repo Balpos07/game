@@ -125,13 +125,13 @@ export default function QuizEngine() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="glass-panel px-4 py-2 flex flex-col items-center justify-center">
-            <span className="text-xs text-slate-400 uppercase tracking-widest font-semibold">Question</span>
-            <span className="text-xl font-bold text-slate-50">{currentQuestionIndex + 1} <span className="text-slate-500">/ {questions.length}</span></span>
+            <span className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Question</span>
+            <span className="text-xl font-bold text-slate-900">{currentQuestionIndex + 1} <span className="text-slate-400">/ {questions.length}</span></span>
           </div>
           
           <div className="glass-panel px-4 py-2 flex flex-col items-center justify-center relative">
-            <span className="text-xs text-slate-400 uppercase tracking-widest font-semibold">Score</span>
-            <span className="text-xl font-bold text-[#00f2fe]">{score}</span>
+            <span className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Score</span>
+            <span className="text-xl font-bold text-[#3b82f6]">{score}</span>
             
             {/* Combo Badge */}
             <AnimatePresence>
@@ -152,9 +152,9 @@ export default function QuizEngine() {
         {/* Circular Timer */}
         <div className="relative flex items-center justify-center w-16 h-16 glass-panel rounded-full shrink-0">
           <svg className="w-12 h-12 transform -rotate-90">
-            <circle className="text-white/10" strokeWidth="4" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24" />
+            <circle className="text-slate-900/10" strokeWidth="4" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24" />
             <motion.circle
-              className={cn("transition-colors duration-300", timeLeft <= 5 ? "text-[#ef4444]" : "text-[#00f2fe]")}
+              className={cn("transition-colors duration-300", timeLeft <= 5 ? "text-[#ef4444]" : "text-[#3b82f6]")}
               strokeWidth="4"
               strokeDasharray="125.6"
               strokeDashoffset={125.6 * (1 - timerProgress)}
@@ -167,7 +167,7 @@ export default function QuizEngine() {
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className={cn("text-lg font-bold", timeLeft <= 5 ? "text-[#ef4444] animate-pulse" : "text-slate-50")}>{timeLeft}</span>
+            <span className={cn("text-lg font-bold", timeLeft <= 5 ? "text-[#ef4444] animate-pulse" : "text-slate-900")}>{timeLeft}</span>
           </div>
         </div>
       </div>
@@ -188,7 +188,7 @@ export default function QuizEngine() {
         )}
 
         <div className="flex items-center gap-3 relative z-10">
-          <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-semibold text-slate-300 capitalize border border-white/5">
+          <span className="px-3 py-1 rounded-full bg-slate-900/5 text-xs font-semibold text-slate-600 capitalize border border-slate-900/10">
             {currentQuestion.category.replace(/_/g, ' ')}
           </span>
           <span className={cn(
@@ -212,18 +212,18 @@ export default function QuizEngine() {
             const isCorrectOption = currentQuestion.correct_option_index === idx;
             const isEliminated = eliminatedOptions.includes(idx);
             
-            let buttonStateStyles = "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 cursor-pointer";
+            let buttonStateStyles = "bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer shadow-sm";
             
             if (isEliminated) {
-              buttonStateStyles = "bg-transparent border-white/5 opacity-20 cursor-not-allowed grayscale";
+              buttonStateStyles = "bg-transparent border-slate-900/5 opacity-20 cursor-not-allowed grayscale";
             } else if (isAnswered) {
               buttonStateStyles = "cursor-default ";
               if (isCorrectOption) {
-                buttonStateStyles += "bg-[#10b981]/20 border-[#10b981]/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]";
+                buttonStateStyles += "bg-[#10b981]/10 border-[#10b981]/50 shadow-[0_0_15px_rgba(16,185,129,0.3)] text-slate-900";
               } else if (isSelected && !isCorrectOption) {
-                buttonStateStyles += "bg-[#ef4444]/20 border-[#ef4444]/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]";
+                buttonStateStyles += "bg-[#ef4444]/10 border-[#ef4444]/50 shadow-[0_0_15px_rgba(239,68,68,0.3)] text-slate-900";
               } else {
-                buttonStateStyles += "bg-white/5 border-white/5 opacity-50";
+                buttonStateStyles += "bg-white border-slate-200 opacity-50";
               }
             }
 
@@ -240,14 +240,14 @@ export default function QuizEngine() {
                 )}
               >
                 <div className={cn(
-                  "flex items-center justify-center w-8 h-8 rounded-lg font-bold text-sm shrink-0",
+                  "flex items-center justify-center w-8 h-8 rounded-lg font-bold text-sm shrink-0 shadow-sm",
                   isAnswered && isCorrectOption ? "bg-[#10b981] text-white" :
                   isAnswered && isSelected && !isCorrectOption ? "bg-[#ef4444] text-white" :
-                  "bg-white/10 text-slate-300"
+                  "bg-slate-100 text-slate-600 border border-slate-200"
                 )}>
                   {OPTION_LABELS[idx]}
                 </div>
-                <span className={cn("font-medium", isEliminated ? "line-through text-slate-500" : "text-slate-200")}>
+                <span className={cn("font-medium", isEliminated ? "line-through text-slate-400" : "text-slate-700")}>
                   {option}
                 </span>
                 
@@ -271,8 +271,8 @@ export default function QuizEngine() {
               onClick={handleFiftyFifty}
               disabled={lifelines.fiftyFiftyUsed}
               className={cn(
-                "px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 border transition-all",
-                lifelines.fiftyFiftyUsed ? "bg-white/5 text-slate-500 border-white/5 cursor-not-allowed" : "bg-[#8a2be2]/10 text-[#8a2be2] border-[#8a2be2]/30 hover:bg-[#8a2be2]/20"
+                "px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 border transition-all shadow-sm bg-white",
+                lifelines.fiftyFiftyUsed ? "text-slate-400 border-slate-200 cursor-not-allowed" : "text-[#8a2be2] border-[#8a2be2]/30 hover:bg-[#8a2be2]/10"
               )}
             >
               <SplitSquareHorizontal className="w-4 h-4" /> 50/50
@@ -281,8 +281,8 @@ export default function QuizEngine() {
               onClick={handleAddTime}
               disabled={lifelines.addTimeUsed}
               className={cn(
-                "px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 border transition-all",
-                lifelines.addTimeUsed ? "bg-white/5 text-slate-500 border-white/5 cursor-not-allowed" : "bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/30 hover:bg-[#f59e0b]/20"
+                "px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 border transition-all shadow-sm bg-white",
+                lifelines.addTimeUsed ? "text-slate-400 border-slate-200 cursor-not-allowed" : "text-[#f59e0b] border-[#f59e0b]/30 hover:bg-[#f59e0b]/10"
               )}
             >
               <PlusCircle className="w-4 h-4" /> +10s
@@ -301,13 +301,13 @@ export default function QuizEngine() {
             className="flex flex-col gap-4 overflow-hidden mt-4"
           >
             <div className={cn(
-              "p-6 rounded-2xl border backdrop-blur-md shadow-lg",
-              isCorrect ? "bg-[#10b981]/10 border-[#10b981]/30" : "bg-[#ef4444]/10 border-[#ef4444]/30"
+              "p-6 rounded-2xl border bg-white shadow-lg",
+              isCorrect ? "border-[#10b981]/30" : "border-[#ef4444]/30"
             )}>
-              <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+              <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-slate-900">
                 {isCorrect ? <><CheckCircle2 className="text-[#10b981]" /> Excellent!</> : <><XCircle className="text-[#ef4444]" /> Incorrect</>}
               </h3>
-              <p className="text-slate-300 leading-relaxed">
+              <p className="text-slate-600 leading-relaxed">
                 {currentQuestion.explanation}
               </p>
             </div>
@@ -316,7 +316,7 @@ export default function QuizEngine() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={nextQuestion}
-              className="glass-panel border-[#00f2fe]/50 bg-[#00f2fe]/10 text-[#00f2fe] py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-colors hover:bg-[#00f2fe]/20 focus:outline-none focus:ring-2 focus:ring-[#00f2fe]"
+              className="glass-panel border-[#3b82f6]/50 bg-[#3b82f6]/10 text-[#3b82f6] py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-colors hover:bg-[#3b82f6]/20 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
               autoFocus
             >
               {currentQuestionIndex === questions.length - 1 ? 'Finish Quiz' : 'Next Question (Press Enter)'}

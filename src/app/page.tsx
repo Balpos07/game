@@ -6,6 +6,7 @@ import QuizEngine from '@/components/QuizEngine';
 import { GEOGRAPHY_QUESTIONS } from '@/data/questions';
 import { Trophy, Share2, Check } from 'lucide-react';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
+import confetti from 'canvas-confetti';
 
 export default function Home() {
   const { startQuiz, status, score, correctAnswersCount, questions, answers, resetQuiz } = useQuizStore();
@@ -19,6 +20,21 @@ export default function Home() {
     }
     if (status === 'finished') {
       playFinished();
+      
+      // Trigger cinematic confetti cannon
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const interval: any = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({ ...defaults, particleCount, origin: { x: 0.1, y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: 0.9, y: Math.random() - 0.2 } });
+      }, 250);
     }
   }, [status, startQuiz, playFinished]);
 
@@ -48,27 +64,27 @@ export default function Home() {
   if (status === 'finished') {
     return (
       <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="glass-panel p-10 flex flex-col items-center gap-6 max-w-lg w-full text-center">
-          <div className="w-20 h-20 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center border border-amber-500/50">
+        <div className="glass-panel p-10 flex flex-col items-center gap-6 max-w-lg w-full text-center bg-white shadow-xl">
+          <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center border border-amber-200">
             <Trophy className="w-10 h-10" />
           </div>
-          <h1 className="text-4xl font-bold text-slate-50">Quiz Complete!</h1>
+          <h1 className="text-4xl font-bold text-slate-900">Quiz Complete!</h1>
           
           <div className="flex gap-8 my-6">
             <div className="flex flex-col items-center">
-              <span className="text-4xl font-bold text-[#00f2fe]">{score}</span>
-              <span className="text-sm text-slate-400 uppercase tracking-wider font-semibold">Total Score</span>
+              <span className="text-4xl font-bold text-[#3b82f6]">{score}</span>
+              <span className="text-sm text-slate-500 uppercase tracking-wider font-semibold">Total Score</span>
             </div>
             <div className="flex flex-col items-center">
               <span className="text-4xl font-bold text-[#10b981]">{correctAnswersCount}/{questions.length}</span>
-              <span className="text-sm text-slate-400 uppercase tracking-wider font-semibold">Correct</span>
+              <span className="text-sm text-slate-500 uppercase tracking-wider font-semibold">Correct</span>
             </div>
           </div>
 
           <div className="flex flex-col gap-3 w-full">
             <button 
               onClick={handleShare}
-              className="w-full glass-panel border-[#8a2be2]/50 bg-[#8a2be2]/10 text-[#8a2be2] font-bold text-lg py-4 flex items-center justify-center gap-2 hover:bg-[#8a2be2]/20 transition-colors"
+              className="w-full glass-panel border-[#8a2be2]/20 bg-[#8a2be2]/10 text-[#8a2be2] font-bold text-lg py-4 flex items-center justify-center gap-2 hover:bg-[#8a2be2]/20 transition-colors shadow-sm"
             >
               {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
               {copied ? 'Copied to Clipboard!' : 'Share Results'}
@@ -76,7 +92,7 @@ export default function Home() {
 
             <button 
               onClick={() => { resetQuiz(); startQuiz(GEOGRAPHY_QUESTIONS); }}
-              className="w-full bg-[#00f2fe] text-slate-950 font-bold text-lg py-4 rounded-xl hover:bg-[#00f2fe]/90 transition-colors"
+              className="w-full bg-[#3b82f6] text-white font-bold text-lg py-4 rounded-xl hover:bg-[#2563eb] transition-colors shadow-md"
             >
               Play Again
             </button>
@@ -89,10 +105,10 @@ export default function Home() {
   return (
     <main className="min-h-screen p-4 md:p-8 flex flex-col pt-16">
       <div className="max-w-5xl mx-auto w-full mb-12 text-center">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#00f2fe] to-[#4facfe]">
+        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
           World Explorer Trivia
         </h1>
-        <p className="text-slate-400 mt-2">Geography Challenge</p>
+        <p className="text-slate-500 mt-2 font-medium">Geography Challenge</p>
       </div>
       
       <QuizEngine />
