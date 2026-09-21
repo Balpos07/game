@@ -20,6 +20,11 @@ export default function Leaderboard() {
 
   useEffect(() => {
     async function fetchLeaderboard() {
+      if (!db) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(10));
         const snapshot = await getDocs(q);

@@ -29,7 +29,7 @@ export default function Home() {
       playFinished();
       
       // Save score to Firestore
-      if (user && !scoreSaved) {
+      if (user && db && !scoreSaved) {
         addDoc(collection(db, 'leaderboard'), {
           uid: user.uid,
           name: user.displayName || 'Anonymous Player',
