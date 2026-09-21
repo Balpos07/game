@@ -33,7 +33,7 @@ export default function Home() {
       if (user && db && !scoreSaved) {
         addDoc(collection(db, 'leaderboard'), {
           uid: user.uid,
-          name: user.displayName || 'Anonymous Player',
+          name: user.displayName || 'Guest Player',
           photoURL: user.photoURL,
           score,
           correctAnswers: correctAnswersCount,
