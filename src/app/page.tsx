@@ -7,11 +7,18 @@ import { GEOGRAPHY_QUESTIONS } from '@/data/questions';
 import { Trophy, Share2, Check } from 'lucide-react';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import confetti from 'canvas-confetti';
+import LoginButton from '@/components/LoginButton';
+import Leaderboard from '@/components/Leaderboard';
+import { useAuth } from '@/hooks/useAuth';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function Home() {
   const { startQuiz, status, score, correctAnswersCount, questions, answers, resetQuiz } = useQuizStore();
   const { playFinished } = useSoundEffects();
   const [copied, setCopied] = useState(false);
+  const { user } = useAuth();
+  const [scoreSaved, setScoreSaved] = useState(false);
 
   useEffect(() => {
     // Only start if not already playing or finished
@@ -21,6 +28,20 @@ export default function Home() {
     if (status === 'finished') {
       playFinished();
       
+      // Save score to Firestore
+      if (user && !scoreSaved) {
+        addDoc(collection(db, 'leaderboard'), {
+          uid: user.uid,
+          name: user.displayName || 'Anonymous Player',
+          photoURL: user.photoURL,
+          score,
+          correctAnswers: correctAnswersCount,
+          totalQuestions: questions.length,
+          date: Date.now()
+        }).catch(err => console.error("Error saving score:", err));
+        setScoreSaved(true);
+      }
+
       // Trigger cinematic confetti cannon
       const duration = 3 * 1000;
       const animationEnd = Date.now() + duration;
@@ -36,7 +57,7 @@ export default function Home() {
         confetti({ ...defaults, particleCount, origin: { x: 0.9, y: Math.random() - 0.2 } });
       }, 250);
     }
-  }, [status, startQuiz, playFinished]);
+  }, [status, startQuiz, playFinished, user, score, scoreSaved, correctAnswersCount, questions.length]);
 
   const generateShareText = () => {
     const header = `🌍 World Explorer Trivia\nScore: ${score} 🥇 (${correctAnswersCount}/${questions.length})\n`;
@@ -63,7 +84,12 @@ export default function Home() {
 
   if (status === 'finished') {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4">
+      <main className="min-h-screen flex flex-col items-center justify-center p-4">
+        {/* Header with Login Button */}
+        <div className="absolute top-4 right-4 z-50">
+          <LoginButton />
+        </div>
+
         <div className="glass-panel p-10 flex flex-col items-center gap-6 max-w-lg w-full text-center bg-white shadow-xl">
           <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center border border-amber-200">
             <Trophy className="w-10 h-10" />
@@ -91,19 +117,33 @@ export default function Home() {
             </button>
 
             <button 
-              onClick={() => { resetQuiz(); startQuiz(GEOGRAPHY_QUESTIONS); }}
+              onClick={() => { resetQuiz(); setScoreSaved(false); startQuiz(GEOGRAPHY_QUESTIONS); }}
               className="w-full bg-[#3b82f6] text-white font-bold text-lg py-4 rounded-xl hover:bg-[#2563eb] transition-colors shadow-md"
             >
               Play Again
             </button>
           </div>
         </div>
+
+        {!user && (
+          <div className="mt-4 text-slate-500 text-sm flex items-center gap-2">
+            Want to save your score? <span className="font-semibold text-slate-700">Sign in using the button in the top right.</span>
+          </div>
+        )}
+
+        {/* Global Leaderboard */}
+        <Leaderboard />
       </main>
     );
   }
 
   return (
     <main className="min-h-screen p-4 md:p-8 flex flex-col pt-16">
+      {/* Header with Login Button */}
+      <div className="absolute top-4 right-4 z-50">
+        <LoginButton />
+      </div>
+
       <div className="max-w-5xl mx-auto w-full mb-12 text-center">
         <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
           World Explorer Trivia
