@@ -11,7 +11,7 @@ import LoginButton from '@/components/LoginButton';
 import Leaderboard from '@/components/Leaderboard';
 import { useAuth } from '@/hooks/useAuth';
 import { collection, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getFirebaseDb } from '@/lib/firebase';
 
 export default function Home() {
   const { startQuiz, status, score, correctAnswersCount, questions, answers, resetQuiz } = useQuizStore();
@@ -29,6 +29,7 @@ export default function Home() {
       playFinished();
       
       // Save score to Firestore
+      const db = getFirebaseDb();
       if (user && db && !scoreSaved) {
         addDoc(collection(db, 'leaderboard'), {
           uid: user.uid,
@@ -152,6 +153,7 @@ export default function Home() {
       </div>
       
       <QuizEngine />
+      <Leaderboard />
     </main>
   );
 }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getFirebaseDb } from '@/lib/firebase';
 import { Trophy, Medal, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -17,9 +17,11 @@ type LeaderboardEntry = {
 export default function Leaderboard() {
   const [scores, setScores] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     async function fetchLeaderboard() {
+      const db = getFirebaseDb();
       if (!db) {
         setLoading(false);
         return;
@@ -35,6 +37,7 @@ export default function Leaderboard() {
         setScores(data);
       } catch (error) {
         console.error("Error fetching leaderboard:", error);
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -60,7 +63,9 @@ export default function Leaderboard() {
         Global Leaderboard
       </h2>
 
-      {scores.length === 0 ? (
+      {error ? (
+        <p className="text-center text-slate-500 py-4">Leaderboard unavailable right now.</p>
+      ) : scores.length === 0 ? (
         <p className="text-center text-slate-500 py-4">No scores yet. Be the first!</p>
       ) : (
         <div className="flex flex-col gap-2">

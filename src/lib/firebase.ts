@@ -23,14 +23,18 @@ const hasFirebaseConfig = [
   firebaseConfig.appId,
 ].every(Boolean);
 
-const app: FirebaseApp | null =
-  typeof window !== "undefined" && hasFirebaseConfig
-    ? !getApps().length
-      ? initializeApp(firebaseConfig)
-      : getApp()
-    : null;
+export function getFirebaseApp(): FirebaseApp | null {
+  if (typeof window === "undefined" || !hasFirebaseConfig) return null;
 
-const auth: Auth | null = app ? getAuth(app) : null;
-const db: Firestore | null = app ? getFirestore(app) : null;
+  return !getApps().length ? initializeApp(firebaseConfig) : getApp();
+}
 
-export { app, auth, db };
+export function getFirebaseAuth(): Auth | null {
+  const app = getFirebaseApp();
+  return app ? getAuth(app) : null;
+}
+
+export function getFirebaseDb(): Firestore | null {
+  const app = getFirebaseApp();
+  return app ? getFirestore(app) : null;
+}

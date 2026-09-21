@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { LogIn, LogOut, User } from 'lucide-react';
 
 export default function LoginButton() {
-  const { user, loading, loginWithGoogle, logout } = useAuth();
+  const { user, loading, error, loginWithGoogle, logout } = useAuth();
 
   if (loading) {
     return (
@@ -36,12 +36,15 @@ export default function LoginButton() {
   }
 
   return (
-    <button
-      onClick={loginWithGoogle}
-      className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-full font-semibold transition-all shadow-md active:scale-95"
-    >
-      <LogIn className="w-4 h-4" />
-      <span>Sign In</span>
-    </button>
+    <div className="flex flex-col items-end gap-2">
+      <button
+        onClick={loginWithGoogle}
+        className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-full font-semibold transition-all shadow-md active:scale-95"
+      >
+        <LogIn className="w-4 h-4" />
+        <span>Sign In</span>
+      </button>
+      {error && <p className="max-w-64 text-right text-xs text-red-600">{error}</p>}
+    </div>
   );
 }
