@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { Trophy, Medal, User } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -20,29 +20,31 @@ export default function Leaderboard() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    async function fetchLeaderboard() {
+    function subscribeToLeaderboard() {
       const db = getFirebaseDb();
       if (!db) {
         setLoading(false);
-        return;
+        return undefined;
       }
 
-      try {
-        const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(10));
-        const snapshot = await getDocs(q);
+      const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(10));
+      return onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as LeaderboardEntry[];
         setScores(data);
-      } catch (error) {
+        setError(false);
+        setLoading(false);
+      }, (error) => {
         console.error("Error fetching leaderboard:", error);
         setError(true);
-      } finally {
         setLoading(false);
-      }
+      });
     }
-    fetchLeaderboard();
+
+    const unsubscribe = subscribeToLeaderboard();
+    return () => unsubscribe?.();
   }, []);
 
   if (loading) {

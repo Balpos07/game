@@ -39,8 +39,9 @@ export default function Home() {
           correctAnswers: correctAnswersCount,
           totalQuestions: questions.length,
           date: Date.now()
-        }).catch(err => console.error("Error saving score:", err));
-        setScoreSaved(true);
+        }).then(() => setScoreSaved(true)).catch(err => {
+          console.error("Error saving score:", err);
+        });
       }
 
       // Trigger cinematic confetti cannon
@@ -87,7 +88,7 @@ export default function Home() {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center p-4">
         {/* Header with Login Button */}
-        <div className="absolute top-4 right-4 z-50">
+        <div className="fixed top-4 right-4 z-50">
           <LoginButton />
         </div>
 
@@ -141,7 +142,7 @@ export default function Home() {
   return (
     <main className="min-h-screen p-4 md:p-8 flex flex-col pt-16">
       {/* Header with Login Button */}
-      <div className="absolute top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-50">
         <LoginButton />
       </div>
 

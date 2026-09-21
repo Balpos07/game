@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, User, signInWithRedirect, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { getRedirectResult, onAuthStateChanged, User, signInWithRedirect, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
 
 export function useAuth() {
@@ -20,6 +20,13 @@ export function useAuth() {
       setUser(currentUser);
       setLoading(false);
     });
+
+    getRedirectResult(auth).catch((error) => {
+      console.error("Error completing Google sign-in:", error);
+      setError("Sign-in was not completed. Check the Firebase Google provider and authorized domain.");
+      setLoading(false);
+    });
+
     return () => unsubscribe();
   }, []);
 
