@@ -44,7 +44,7 @@ export default function LoginButton() {
         <LogIn className="w-4 h-4" />
         <span>Sign In</span>
       </button>
-      {error && <p className="max-w-64 text-right text-xs text-red-600">{error}</p>}
+      {error && <p className="max-w-72 text-right text-xs text-red-600">{error}</p>}
     </div>
   );
 }

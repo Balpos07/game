@@ -1,29 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getRedirectResult, onAuthStateChanged, User, signInWithRedirect, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { getFirebaseAuth } from '@/lib/firebase';
+import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { getFirebaseAuth, isFirebaseConfigured } from '@/lib/firebase';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(() => isFirebaseConfigured());
+  const [error, setError] = useState<string | null>(() => (
+    isFirebaseConfigured()
+      ? null
+      : 'Sign-in is not configured. Add the NEXT_PUBLIC_FIREBASE_* variables to .env.local.'
+  ));
 
   useEffect(() => {
     const auth = getFirebaseAuth();
     if (!auth) {
-      setLoading(false);
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setLoading(false);
-    });
-
-    getRedirectResult(auth).catch((error) => {
-      console.error("Error completing Google sign-in:", error);
-      setError("Sign-in was not completed. Check the Firebase Google provider and authorized domain.");
       setLoading(false);
     });
 
@@ -37,7 +34,7 @@ export function useAuth() {
     try {
       setError(null);
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error signing in with Google:", error);
       setError("Sign-in is unavailable. Check the Firebase Google provider and authorized domain.");

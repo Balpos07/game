@@ -17,7 +17,7 @@ export default function Home() {
   const { startQuiz, status, score, correctAnswersCount, questions, answers, resetQuiz } = useQuizStore();
   const { playFinished } = useSoundEffects();
   const [copied, setCopied] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [scoreSaved, setScoreSaved] = useState(false);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function Home() {
       
       // Save score to Firestore
       const db = getFirebaseDb();
-      if (user && db && !scoreSaved) {
+      if (!authLoading && user && db && !scoreSaved) {
         addDoc(collection(db, 'leaderboard'), {
           uid: user.uid,
           name: user.displayName || 'Guest Player',
@@ -49,7 +49,7 @@ export default function Home() {
       const animationEnd = Date.now() + duration;
       const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
-      const interval: any = setInterval(function() {
+      const interval: ReturnType<typeof setInterval> = setInterval(function() {
         const timeLeft = animationEnd - Date.now();
         if (timeLeft <= 0) {
           return clearInterval(interval);
@@ -59,7 +59,7 @@ export default function Home() {
         confetti({ ...defaults, particleCount, origin: { x: 0.9, y: Math.random() - 0.2 } });
       }, 250);
     }
-  }, [status, startQuiz, playFinished, user, score, scoreSaved, correctAnswersCount, questions.length]);
+  }, [status, startQuiz, playFinished, user, authLoading, score, scoreSaved, correctAnswersCount, questions.length]);
 
   const generateShareText = () => {
     const header = `🌍 World Explorer Trivia\nScore: ${score} 🥇 (${correctAnswersCount}/${questions.length})\n`;

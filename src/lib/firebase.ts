@@ -18,10 +18,12 @@ const hasFirebaseConfig = [
   firebaseConfig.apiKey,
   firebaseConfig.authDomain,
   firebaseConfig.projectId,
-  firebaseConfig.storageBucket,
-  firebaseConfig.messagingSenderId,
   firebaseConfig.appId,
 ].every(Boolean);
+
+export function isFirebaseConfigured(): boolean {
+  return hasFirebaseConfig;
+}
 
 export function getFirebaseApp(): FirebaseApp | null {
   if (typeof window === "undefined" || !hasFirebaseConfig) return null;
