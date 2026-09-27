@@ -17,14 +17,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 // ── GDG four-color word mark ──────────────────────────────────────────────────
 function DnvWordMark() {
   return (
-    <div className="flex items-center justify-center gap-1.5 text-3xl md:text-5xl font-bold leading-none select-none">
-      <span style={{ color: '#3186FF' }}>Dev</span>
-      <span style={{ color: '#EA4335' }}>N</span>
-      <span style={{ color: '#FBBC05' }}>&apos;</span>
-      <span style={{ color: '#34A853' }}>Visuals</span>
-      <span className="text-[#1E1E1E]">·</span>
-      <span style={{ color: '#3186FF' }}>Trivia</span>
-      <span style={{ color: '#EA4335' }}>!</span>
+    <div className="flex items-center justify-center gap-1.5 text-3xl md:text-5xl font-bold leading-none select-none text-[#1E1E1E]">
+      <span>Dev</span>
+      <span>N</span>
+      <span>&apos;</span>
+      <span>Visuals</span>
+      <span>·</span>
+      <span>Trivia</span>
+      <span>!</span>
     </div>
   );
 }
@@ -251,7 +251,7 @@ export default function Home() {
             className="flex flex-col items-center gap-3"
           >
             {/* GDG event chip */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#3186FF]/20 shadow-sm">
+            {/* <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#3186FF]/20 shadow-sm">
               <span className="flex gap-0.5">
                 <span className="w-2 h-2 rounded-full bg-[#3186FF]" />
                 <span className="w-2 h-2 rounded-full bg-[#EA4335]" />
@@ -259,12 +259,12 @@ export default function Home() {
                 <span className="w-2 h-2 rounded-full bg-[#34A853]" />
               </span>
               <span className="text-xs font-bold text-[#1E1E1E]/70 uppercase tracking-wider">DevN&apos;Visuals</span>
-            </div>
+            </div> */}
 
             <DnvWordMark />
 
             <p className="text-[#1E1E1E]/60 font-medium max-w-md">
-              Test your tech and design knowledge and compete for the top spot on the global leaderboard.
+              Test your tech and design knowledge and compete for the top spot on the leaderboard.
             </p>
           </motion.div>
         </div>

@@ -1,21 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import LoginButton from './LoginButton';
 import { Menu, X } from 'lucide-react';
-
-// Four-color GDG dot logo
-function GdgIcon({ size = 36 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 36 36" fill="none" aria-hidden="true">
-      {/* Simplified GDG dots: Blue, Red, Yellow, Green */}
-      <circle cx="18" cy="10" r="6.5" fill="#3186FF" />
-      <circle cx="26" cy="22" r="6.5" fill="#EA4335" />
-      <circle cx="10" cy="22" r="6.5" fill="#FBBC05" />
-      <circle cx="18" cy="30" r="5" fill="#34A853" />
-    </svg>
-  );
-}
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -38,7 +26,7 @@ export default function Header() {
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-8">
         {/* Logo */}
         <a href="/" aria-label="DevN'Visuals Trivia home" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-          <GdgIcon size={34} />
+          <Image src="/logo.png" width={420} height={419} alt="" className="h-[34px] w-auto" />
           <div className="flex flex-col leading-none">
             <span className="font-bold text-[#1E1E1E] text-sm md:text-base">DevN&apos;Visuals</span>
             <span className="text-[10px] font-medium text-[#1E1E1E]/50 uppercase tracking-widest">Trivia</span>
