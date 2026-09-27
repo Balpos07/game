@@ -1,56 +1,220 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
-  --color-primary: #00f2fe;
-  --color-developer: #00f2fe;
-  --color-designer: #8a2be2;
-  --color-writer: #f59e0b;
-  --color-danger: #ef4444;
-  --color-success: #10b981;
+  --font-sans: "Plus Jakarta Sans", var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", var(--font-outfit), sans-serif;
+
+  /* DevFest Ilorin Brand Colors */
+  --color-devfest-bg: #FCF4F4;
+  --color-devfest-bg2: #FDF4F5;
+  --color-gdg-blue: #3186FF;
+  --color-gdg-blue-light: #6D97FF;
+  --color-gdg-purple: #A9A8FF;
+  --color-gdg-red: #EA4335;
+  --color-gdg-green: #34A853;
+  --color-gdg-yellow: #FBBC05;
+  --color-devfest-dark: #1E1E1E;
+
+  /* Semantic */
+  --color-primary: #3186FF;
+  --color-success: #34A853;
+  --color-danger: #EA4335;
+  --color-warning: #FBBC05;
+  --color-purple: #8a2be2;
 }
 
 @layer base {
   :root {
-    --background: #f8fafc; /* slate-50 */
-    --foreground: #0f172a; /* slate-900 */
-    --accent: #3b82f6; /* blue-500 */
+    --background: #FCF4F4;
+    --foreground: #1E1E1E;
+    --card: #FFFFFF;
+    --border: rgba(30, 30, 30, 0.1);
+    --muted: rgba(30, 30, 30, 0.6);
+    --accent: #3186FF;
   }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   color: var(--foreground);
   background-color: var(--background);
-  font-family: var(--font-sans);
-  
-  /* Animated Mesh Gradient Background */
-  background-image: 
-    radial-gradient(at 0% 0%, hsla(253,16%,7%,0.05) 0, transparent 50%), 
-    radial-gradient(at 50% 0%, hsla(225,39%,30%,0.05) 0, transparent 50%), 
-    radial-gradient(at 100% 0%, hsla(339,49%,30%,0.05) 0, transparent 50%);
+  background-image: radial-gradient(
+    85.98% 85.98% at 50% 17.07%,
+    #FCF4F4 52%,
+    #FFF7FA 76%,
+    #FFC4C2 100%
+  );
   background-attachment: fixed;
-  background-size: 200% 200%;
-  animation: gradientMove 15s ease infinite alternate;
+  min-height: 100vh;
+  font-family: "Plus Jakarta Sans", var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@keyframes gradientMove {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+/* ── DevFest Button Variants ── */
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.375rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
+  background: radial-gradient(
+    85.98% 85.98% at 50% 17.07%,
+    #3186FF 52%,
+    #6D97FF 76%,
+    #A9A8FF 100%
+  );
+  color: #fff;
+  &:hover:not(:active) {
+    transform: scale(1.03);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
 }
 
+@utility btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.375rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: #1E1E1E;
+  color: #fff;
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
+  &:hover:not(:active) {
+    transform: scale(1.03);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+/* ── Glass Card ── */
+@utility glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(30, 30, 30, 0.08);
+  border-radius: 1.5rem;
+  box-shadow: 0 2px 24px rgba(30, 30, 30, 0.06), 0 1px 2px rgba(30, 30, 30, 0.04);
+}
+
+/* keep old name for compat */
 @utility glass-panel {
-  @apply bg-white/60 backdrop-blur-xl border border-slate-200/50 shadow-sm;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(30, 30, 30, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 2px 24px rgba(30, 30, 30, 0.06);
 }
 
 @utility glass-panel-gold {
-  @apply backdrop-blur-md border border-amber-400/50 bg-amber-500/10 rounded-2xl shadow-2xl;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(251, 188, 5, 0.4);
+  background: rgba(251, 188, 5, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 0 24px rgba(251, 188, 5, 0.15);
 }
 
 @utility glass-panel-silver {
-  @apply backdrop-blur-md border border-slate-300/50 bg-slate-400/10 rounded-2xl shadow-2xl;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(180, 180, 190, 0.4);
+  background: rgba(180, 180, 190, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 0 24px rgba(180, 180, 190, 0.15);
 }
 
 @utility glass-panel-bronze {
-  @apply backdrop-blur-md border border-amber-700/50 bg-amber-800/10 rounded-2xl shadow-2xl;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(180, 100, 40, 0.35);
+  background: rgba(180, 100, 40, 0.07);
+  border-radius: 1rem;
+  box-shadow: 0 0 24px rgba(180, 100, 40, 0.12);
 }
+
+/* ── GDG Icon Badge ── */
+@utility gdg-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #ffffff;
+}
+
+/* ── Answer Option States ── */
+@utility option-default {
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(30,30,30,0.1);
+  box-shadow: 0 1px 4px rgba(30,30,30,0.05);
+}
+
+@utility option-correct {
+  background: rgba(52,168,83,0.1);
+  border: 1px solid rgba(52,168,83,0.4);
+  box-shadow: 0 0 16px rgba(52,168,83,0.2);
+}
+
+@utility option-wrong {
+  background: rgba(234,67,53,0.1);
+  border: 1px solid rgba(234,67,53,0.4);
+  box-shadow: 0 0 16px rgba(234,67,53,0.2);
+}
+
+/* ── Progress Bar ── */
+@utility devfest-progress {
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(30,30,30,0.08);
+  overflow: hidden;
+}
+
+/* ── Floating animation for decorative elements ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+@keyframes floatReverse {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(8px) rotate(-3deg); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(49, 134, 255, 0.35); }
+  70%  { box-shadow: 0 0 0 12px rgba(49, 134, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(49, 134, 255, 0); }
+}
+
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-float-rev { animation: floatReverse 5s ease-in-out infinite; }
+.animate-fade-in-up { animation: fadeInUp 0.5s ease forwards; }
+.animate-pulse-ring { animation: pulse-ring 2s ease-out infinite; }
