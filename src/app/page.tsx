@@ -17,15 +17,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 // ── GDG four-color word mark ──────────────────────────────────────────────────
 function DnvWordMark() {
   return (
-    <div className="flex items-center justify-center gap-1.5 text-3xl md:text-5xl font-bold leading-none select-none text-[#1E1E1E]">
-      <span>Dev</span>
-      <span>N</span>
-      <span>&apos;</span>
-      <span>Visuals</span>
-      <span>·</span>
-      <span>Trivia</span>
-      <span>!</span>
-    </div>
+    <h1 className="max-w-full px-2 text-center text-3xl font-bold leading-tight text-[#1E1E1E] select-none sm:text-4xl md:px-0 md:text-5xl">
+      DevN&apos;Visuals · Trivia!
+    </h1>
   );
 }
 
@@ -231,13 +225,13 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col items-center px-4 py-8 md:py-12">
         {/* Hero header */}
-        <div className="relative w-full max-w-3xl text-center mb-10">
+        <div className="relative mb-8 w-full max-w-3xl text-center sm:mb-10">
           {/* Floating decoration */}
-          <FloatingChip style={{ top: '-10px', left: '0', animationDelay: '0s' }} >
-            <span className="animate-float inline-block">💡</span>
+          <FloatingChip style={{ top: '-10px', left: '0', animationDelay: '0s' }}>
+            <span className="hidden animate-float sm:inline-block">💡</span>
           </FloatingChip>
           <FloatingChip style={{ top: '8px', right: '4px', animationDelay: '0.8s' }}>
-            <span className="animate-float-rev inline-block">🏆</span>
+            <span className="hidden animate-float-rev sm:inline-block">🏆</span>
           </FloatingChip>
 
           <motion.div
@@ -259,7 +253,7 @@ export default function Home() {
 
             <DnvWordMark />
 
-            <p className="text-[#1E1E1E]/60 font-medium max-w-md">
+            <p className="max-w-md px-2 font-medium text-[#1E1E1E]/60 sm:px-0">
               Test your tech and design knowledge and compete for the top spot on the leaderboard.
             </p>
           </motion.div>

@@ -238,7 +238,7 @@ export default function QuizEngine() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -28 }}
           transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
-          className="glass-card p-6 md:p-8 flex flex-col gap-5 relative overflow-hidden"
+          className="glass-card relative flex flex-col gap-4 overflow-hidden p-4 sm:gap-5 sm:p-6 md:p-8"
         >
           {/* Hint emoji watermark */}
           {currentQuestion.hint_emoji && (

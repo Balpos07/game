@@ -47,7 +47,7 @@ export default function Leaderboard() {
   }, []);
 
   return (
-    <div className="glass-card p-6 md:p-8 w-full max-w-lg mx-auto">
+    <div className="glass-card mx-auto w-full max-w-lg p-4 sm:p-6 md:p-8">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div
@@ -97,7 +97,7 @@ export default function Leaderboard() {
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.04, ease: [0.34, 1.56, 0.64, 1] }}
-                className="flex items-center justify-between p-3.5 rounded-2xl transition-all"
+                className="flex items-center justify-between gap-2 rounded-2xl p-3 transition-all sm:gap-3 sm:p-3.5"
                 style={
                   isTop3
                     ? {
@@ -110,9 +110,9 @@ export default function Leaderboard() {
                       }
                 }
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                   {/* Rank */}
-                  <div className="w-8 flex justify-center shrink-0">
+                  <div className="flex w-6 shrink-0 justify-center sm:w-8">
                     {isTop3 ? (
                       <span className="text-xl leading-none">{rankCfg.label}</span>
                     ) : (
@@ -136,7 +136,7 @@ export default function Leaderboard() {
 
                   {/* Name */}
                   <span
-                    className="font-semibold text-sm text-[#1E1E1E] truncate max-w-32"
+                    className="min-w-0 flex-1 truncate text-sm font-semibold text-[#1E1E1E]"
                     title={entry.name}
                   >
                     {entry.name}

@@ -23,10 +23,10 @@ export default function Header() {
           : 'bg-transparent border-b border-transparent'
       }`}
     >
-      <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-8">
+      <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4 md:px-8">
         {/* Logo */}
-        <a href="/" aria-label="DevN'Visuals Trivia home" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-          <Image src="/logo.png" width={420} height={419} alt="" className="h-[34px] w-auto" />
+        <a href="/" aria-label="DevN'Visuals Trivia home" className="flex min-w-0 shrink-0 items-center gap-2 transition-opacity hover:opacity-80 sm:gap-2.5">
+          <Image src="/logo.png" width={420} height={419} alt="" className="h-8 w-auto sm:h-[34px]" />
           <div className="flex flex-col leading-none">
             <span className="font-bold text-[#1E1E1E] text-sm md:text-base">DevN&apos;Visuals</span>
             <span className="text-[10px] font-medium text-[#1E1E1E]/50 uppercase tracking-widest">Trivia</span>
@@ -56,7 +56,7 @@ export default function Header() {
         </div>
 
         {/* Mobile: just login + burger */}
-        <div className="flex sm:hidden items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:hidden">
           <LoginButton />
           <button
             onClick={() => setMobileOpen(v => !v)}
