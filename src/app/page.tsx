@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 function DnvWordMark() {
   return (
     <h1 className="max-w-full px-2 text-center text-3xl font-bold leading-tight text-[#1E1E1E] select-none sm:text-4xl md:px-0 md:text-5xl">
-      DevN&apos;Visuals · Trivia!
+      DN&apos;V  Trivia!
     </h1>
   );
 }
