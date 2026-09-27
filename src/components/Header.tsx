@@ -29,7 +29,7 @@ export default function Header() {
           <Image src="/logo.png" width={420} height={419} alt="" className="h-[22px] w-auto sm:h-[26px]" />
           <div className="flex flex-col leading-none">
             <span className="font-bold text-[#1E1E1E] text-sm md:text-base">DevN&apos;Visuals</span>
-            <span className="text-[10px] font-medium text-[#1E1E1E]/50 uppercase tracking-widest">Trivia</span>
+            {/* <span className="text-[10px] font-medium text-[#1E1E1E]/50 uppercase tracking-widest">Trivia</span> */}
           </div>
         </a>
 
