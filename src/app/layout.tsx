@@ -17,12 +17,12 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "DevFest Ilorin 2026 Trivia",
+  title: "DevN'Visuals Trivia",
   description:
-    "Play the DevFest Ilorin 2026 trivia tournament. Sign in with Google and compete on the global leaderboard.",
+    "Play the DevN'Visuals trivia challenge. Sign in with Google and compete on the global leaderboard.",
   openGraph: {
-    title: "DevFest Ilorin 2026 Trivia",
-    description: "Test your tech knowledge at the biggest tech conference in North Central Nigeria.",
+    title: "DevN'Visuals Trivia",
+    description: "Test your tech and design knowledge on DevN'Visuals.",
     type: "website",
   },
 };

@@ -15,14 +15,16 @@ import { getFirebaseDb } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── GDG four-color word mark ──────────────────────────────────────────────────
-function DevFestWordMark() {
+function DnvWordMark() {
   return (
     <div className="flex items-center justify-center gap-1.5 text-3xl md:text-5xl font-bold leading-none select-none">
       <span style={{ color: '#3186FF' }}>Dev</span>
-      <span style={{ color: '#EA4335' }}>Fest</span>
+      <span style={{ color: '#EA4335' }}>N</span>
+      <span style={{ color: '#FBBC05' }}>&apos;</span>
+      <span style={{ color: '#34A853' }}>Visuals</span>
       <span className="text-[#1E1E1E]">·</span>
-      <span style={{ color: '#FBBC05' }}>Trivia</span>
-      <span style={{ color: '#34A853' }}>!</span>
+      <span style={{ color: '#3186FF' }}>Trivia</span>
+      <span style={{ color: '#EA4335' }}>!</span>
     </div>
   );
 }
@@ -112,13 +114,13 @@ export default function Home() {
 
   // ── Share ──────────────────────────────────────────────────────────────────
   const generateShareText = () => {
-    const header = `🏆 DevFest Ilorin 2026 Trivia\nScore: ${score} (${correctAnswersCount}/${questions.length} correct)\n`;
+    const header = `🏆 DevN'Visuals Trivia\nScore: ${score} (${correctAnswersCount}/${questions.length} correct)\n`;
     let grid = '';
     answers.forEach((ans, idx) => {
       grid += ans.isCorrect ? '🟦' : '🟥';
       if ((idx + 1) % 5 === 0) grid += '\n';
     });
-    return `${header}\n${grid}\nPlay at: devfestilorin.com/game`;
+    return `${header}\n${grid}\nPlay at: devnvisuals.com`;
   };
 
   const handleShare = async () => {
@@ -256,13 +258,13 @@ export default function Home() {
                 <span className="w-2 h-2 rounded-full bg-[#FBBC05]" />
                 <span className="w-2 h-2 rounded-full bg-[#34A853]" />
               </span>
-              <span className="text-xs font-bold text-[#1E1E1E]/70 uppercase tracking-wider">DevFest Ilorin 2026</span>
+              <span className="text-xs font-bold text-[#1E1E1E]/70 uppercase tracking-wider">DevN&apos;Visuals</span>
             </div>
 
-            <DevFestWordMark />
+            <DnvWordMark />
 
             <p className="text-[#1E1E1E]/60 font-medium max-w-md">
-              Test your tech knowledge and compete for the top spot on the global leaderboard.
+              Test your tech and design knowledge and compete for the top spot on the global leaderboard.
             </p>
           </motion.div>
         </div>
@@ -279,11 +281,10 @@ export default function Home() {
       {/* Footer */}
       <footer className="text-center py-6 text-sm text-[#1E1E1E]/40 border-t border-[#1E1E1E]/6">
         <p>
-          Made with ❤️ for{' '}
-          <a href="https://devfestilorin.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#3186FF] transition-colors">
-            DevFest Ilorin 2026
+          Made with ❤️ by{' '}
+          <a href="#" className="underline hover:text-[#3186FF] transition-colors">
+            DevN&apos;Visuals
           </a>
-          {' '}· November 6–7, Ilorin
         </p>
       </footer>
     </div>

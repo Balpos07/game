@@ -190,7 +190,7 @@ export default function QuizEngine() {
 
           {/* Progress bar */}
           <div className="flex-1 space-y-1 min-w-0">
-            <div className="devfest-progress">
+            <div className="dnv-progress">
               <motion.div
                 className="h-full rounded-full"
                 style={{ background: 'linear-gradient(90deg, #3186FF, #6D97FF)' }}

@@ -4,16 +4,16 @@
   --font-sans: "Plus Jakarta Sans", var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-display: "Plus Jakarta Sans", var(--font-outfit), sans-serif;
 
-  /* DevFest Ilorin Brand Colors */
-  --color-devfest-bg: #FCF4F4;
-  --color-devfest-bg2: #FDF4F5;
+  /* DevN'Visuals Brand Colors */
+  --color-dnv-bg: #FCF4F4;
+  --color-dnv-bg2: #FDF4F5;
   --color-gdg-blue: #3186FF;
   --color-gdg-blue-light: #6D97FF;
   --color-gdg-purple: #A9A8FF;
   --color-gdg-red: #EA4335;
   --color-gdg-green: #34A853;
   --color-gdg-yellow: #FBBC05;
-  --color-devfest-dark: #1E1E1E;
+  --color-dnv-dark: #1E1E1E;
 
   /* Semantic */
   --color-primary: #3186FF;
@@ -58,7 +58,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── DevFest Button Variants ── */
+/* ── DevN'Visuals Button Variants ── */
 @utility btn-primary {
   display: inline-flex;
   align-items: center;
@@ -185,7 +185,7 @@ body {
 }
 
 /* ── Progress Bar ── */
-@utility devfest-progress {
+@utility dnv-progress {
   height: 4px;
   border-radius: 9999px;
   background: rgba(30,30,30,0.08);

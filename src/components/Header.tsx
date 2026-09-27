@@ -37,31 +37,27 @@ export default function Header() {
     >
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 md:px-8">
         {/* Logo */}
-        <a href="/" aria-label="DevFest Ilorin 2026 Trivia home" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+        <a href="/" aria-label="DevN'Visuals Trivia home" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
           <GdgIcon size={34} />
           <div className="flex flex-col leading-none">
-            <span className="font-bold text-[#1E1E1E] text-sm md:text-base">DevFest Ilorin</span>
-            <span className="text-[10px] font-medium text-[#1E1E1E]/50 uppercase tracking-widest">Trivia 2026</span>
+            <span className="font-bold text-[#1E1E1E] text-sm md:text-base">DevN&apos;Visuals</span>
+            <span className="text-[10px] font-medium text-[#1E1E1E]/50 uppercase tracking-widest">Trivia</span>
           </div>
         </a>
 
         {/* Desktop right side */}
         <div className="hidden sm:flex items-center gap-4">
           <a
-            href="https://devfestilorin.com"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#"
             className="text-sm font-medium text-[#1E1E1E]/70 hover:text-[#1E1E1E] transition-colors"
           >
-            devfestilorin.com
+            devnvisuals.com
           </a>
           <a
-            href="https://gdg.community.dev/events/details/google-gdg-ilorin-presents-devfest-ilorin-2026/"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#"
             className="btn-primary !py-2.5 !px-5 !text-sm"
           >
-            Get Tickets
+            Play Now
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white">
               <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3186FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 5H19V11"/><path d="M19 5L5 19"/>
@@ -89,20 +85,16 @@ export default function Header() {
         <div className="sm:hidden mx-4 mb-3 rounded-2xl border border-[#1E1E1E]/8 bg-white/90 backdrop-blur shadow-lg overflow-hidden">
           <div className="flex flex-col p-2 gap-1">
             <a
-              href="https://devfestilorin.com"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#"
               className="block px-4 py-3 rounded-xl text-sm font-medium text-[#1E1E1E] hover:bg-[#1E1E1E]/5 transition-colors"
             >
-              devfestilorin.com ↗
+              devnvisuals.com ↗
             </a>
             <a
-              href="https://gdg.community.dev/events/details/google-gdg-ilorin-presents-devfest-ilorin-2026/"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#"
               className="btn-primary mx-2 my-1 text-sm"
             >
-              Get Tickets
+              Play Now
             </a>
           </div>
         </div>
