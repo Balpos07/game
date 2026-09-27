@@ -126,7 +126,7 @@ export default function Leaderboard() {
                       src={entry.photoURL}
                       alt={entry.name}
                       className="w-8 h-8 rounded-full shrink-0"
-                      style={isTop3 ? { ringColor: rankCfg.color } : {}}
+                      style={isTop3 ? { boxShadow: `0 0 0 2px ${rankCfg.color}` } : {}}
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-[#3186FF]/15 flex items-center justify-center shrink-0">
