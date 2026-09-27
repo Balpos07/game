@@ -73,10 +73,6 @@ export default function Home() {
 
   // ── Effects ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (status === 'idle') {
-      startQuiz(GEOGRAPHY_QUESTIONS);
-    }
-
     if (status === 'finished') {
       playFinished();
 
@@ -268,6 +264,16 @@ export default function Home() {
             </p>
           </motion.div>
         </div>
+
+        {status === 'idle' && (
+          <button
+            onClick={() => startQuiz(GEOGRAPHY_QUESTIONS)}
+            className="btn-primary mb-8 !py-3.5 !px-8 !text-base"
+          >
+            Start Trivia
+            <ArrowIcon />
+          </button>
+        )}
 
         {/* Quiz engine */}
         <QuizEngine />
