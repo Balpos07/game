@@ -96,7 +96,10 @@ export default function QuizEngine() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [eliminatedOptions, setEliminatedOptions] = useState<number[]>([]);
-  const timerRef = useRef({ stopTimer: () => undefined, timeLeft: currentQuestion?.time_limit_seconds || 15 });
+  const timerRef = useRef<{ stopTimer: () => void; timeLeft: number }>({
+    stopTimer: () => undefined,
+    timeLeft: currentQuestion?.time_limit_seconds || 15,
+  });
 
   const { playCorrect, playIncorrect, playTick } = useSoundEffects();
 
