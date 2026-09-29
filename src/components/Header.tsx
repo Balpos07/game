@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import LoginButton from './LoginButton';
 import { Menu, X } from 'lucide-react';
 
@@ -23,26 +24,32 @@ export default function Header() {
           : 'bg-transparent border-b border-transparent'
       }`}
     >
-      <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4 md:px-8">
+      <nav className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4 md:px-6">
         {/* Logo */}
-        <a href="/" aria-label="DevN'Visuals Trivia home" className="flex min-w-0 shrink-0 items-center gap-2 transition-opacity hover:opacity-80 sm:gap-2.5">
-          <Image src="/logo.png" width={420} height={419} alt="" className="h-[22px] w-auto sm:h-[26px]" />
-          <div className="flex flex-col leading-none">
+        <Link href="/" aria-label="DevN'Visuals Trivia home" className="flex min-w-0 shrink-0 items-center gap-2 transition-opacity hover:opacity-80 sm:gap-2.5">
+          <Image src="/dnv-logo.png" width={420} height={419} alt="" className="h-[22px] w-auto sm:h-[26px]" />
+          {/* <div className="flex flex-col leading-none">
             <span className="font-bold text-[#1E1E1E] text-sm md:text-base">DevN&apos;Visuals</span>
-            {/* <span className="text-[10px] font-medium text-[#1E1E1E]/50 uppercase tracking-widest">Trivia</span> */}
-          </div>
-        </a>
+            <span className="text-[10px] font-medium text-[#1E1E1E]/50 uppercase tracking-widest">Trivia</span>
+          </div> */}
+        </Link>
 
         {/* Desktop right side */}
         <div className="hidden sm:flex items-center gap-4">
-          <a
-            href="#"
+          <Link
+            href="/community"
             className="text-sm font-medium text-[#1E1E1E]/70 hover:text-[#1E1E1E] transition-colors"
           >
-            devnvisuals.com
-          </a>
-          <a
-            href="#"
+            Community
+          </Link>
+          <Link
+            href="/profile"
+            className="text-sm font-medium text-[#1E1E1E]/70 hover:text-[#1E1E1E] transition-colors"
+          >
+            Profile
+          </Link>
+          <Link
+            href="/"
             className="btn-primary !py-2.5 !px-5 !text-sm"
           >
             Play Now
@@ -51,7 +58,7 @@ export default function Header() {
                 <path d="M13 5H19V11"/><path d="M19 5L5 19"/>
               </svg>
             </span>
-          </a>
+          </Link>
           <LoginButton />
         </div>
 
@@ -72,18 +79,24 @@ export default function Header() {
       {mobileOpen && (
         <div className="sm:hidden mx-4 mb-3 rounded-2xl border border-[#1E1E1E]/8 bg-white/90 backdrop-blur shadow-lg overflow-hidden">
           <div className="flex flex-col p-2 gap-1">
-            <a
-              href="#"
+            <Link
+              href="/community"
               className="block px-4 py-3 rounded-xl text-sm font-medium text-[#1E1E1E] hover:bg-[#1E1E1E]/5 transition-colors"
             >
-              devnvisuals.com ↗
-            </a>
-            <a
-              href="#"
+              Community ↗
+            </Link>
+            <Link
+              href="/profile"
+              className="block rounded-xl px-4 py-3 text-sm font-medium text-[#1E1E1E] transition-colors hover:bg-[#1E1E1E]/5"
+            >
+              Profile ↗
+            </Link>
+            <Link
+              href="/"
               className="btn-primary mx-2 my-1 text-sm"
             >
               Play Now
-            </a>
+            </Link>
           </div>
         </div>
       )}

@@ -1,0 +1,162 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { ArrowLeft, LoaderCircle, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import Header from '@/components/Header';
+import { useAuth } from '@/hooks/useAuth';
+import { getFirebaseDb } from '@/lib/firebase';
+import type { DifficultyLevel, Question, QuestionCategory } from '@/types/quiz';
+import { CommunityContent, DEFAULT_COMMUNITY_CONTENT } from '@/types/community';
+
+const emptyForm = {
+  category: 'geography' as QuestionCategory,
+  difficulty: 'easy' as DifficultyLevel,
+  question_text: '',
+  options: ['', '', '', ''],
+  correct_option_index: 0,
+  explanation: '',
+  time_limit_seconds: 15,
+};
+
+const ADMIN_UID = 'sc86ijhTeih8DyHayLFTmKMHSCl2';
+
+export default function AdminPage() {
+  const { user, loading: authLoading, loginWithGoogle } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [communityContent, setCommunityContent] = useState<CommunityContent>(DEFAULT_COMMUNITY_CONTENT);
+  const [organizersText, setOrganizersText] = useState('');
+  const [contentType, setContentType] = useState<'speaker' | 'organizer'>('speaker');
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!user) {
+        setCheckingAccess(false);
+        setIsAdmin(false);
+        return;
+      }
+      const db = getFirebaseDb();
+      if (!db) {
+        setCheckingAccess(false);
+        return;
+      }
+      const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+      setIsAdmin(adminDoc.exists() || user.uid === ADMIN_UID);
+      setCheckingAccess(false);
+    };
+    if (!authLoading) void checkAccess();
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const db = getFirebaseDb();
+    if (!db) return;
+    getDoc(doc(db, 'communityContent', 'current')).then(snapshot => {
+      if (!snapshot.exists()) return;
+      const saved = { ...DEFAULT_COMMUNITY_CONTENT, ...snapshot.data() } as CommunityContent;
+      setCommunityContent(saved);
+      setOrganizersText(saved.organizers.map(organizer => `${organizer.name} | ${organizer.role} | ${organizer.contact}`).join('\n'));
+    });
+    return onSnapshot(collection(db, 'questions'), snapshot => {
+      setQuestions(snapshot.docs.map(item => ({ id: item.id, ...item.data() })) as Question[]);
+    });
+  }, [isAdmin]);
+
+  const saveCommunityContent = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const db = getFirebaseDb();
+    if (!db) return;
+    const organizers = organizersText.split('\n').map(line => {
+      const [name = '', role = '', contact = ''] = line.split('|').map(value => value.trim());
+      return { name, role, contact };
+    }).filter(organizer => organizer.name);
+    await setDoc(doc(db, 'communityContent', 'current'), { ...communityContent, organizers }, { merge: true });
+    setMessage('Community content updated in Firebase.');
+  };
+
+  const saveQuestion = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!form.question_text.trim() || form.options.some(option => !option.trim()) || !form.explanation.trim()) {
+      setMessage('Complete the question, all four options, and explanation.');
+      return;
+    }
+    const db = getFirebaseDb();
+    if (!db) return;
+    setSaving(true);
+    setMessage('');
+    try {
+      await addDoc(collection(db, 'questions'), {
+        ...form,
+        id: crypto.randomUUID(),
+        options: form.options.map(option => option.trim()),
+        question_text: form.question_text.trim(),
+        explanation: form.explanation.trim(),
+      });
+      setForm(emptyForm);
+      setMessage('Question added to Firebase.');
+    } catch (error) {
+      console.error('Question save failed:', error);
+      setMessage('Could not save the question. Check your permissions.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeQuestion = async (questionId: string) => {
+    const db = getFirebaseDb();
+    if (!db || !window.confirm('Delete this question?')) return;
+    await deleteDoc(doc(db, 'questions', questionId));
+  };
+
+  if (authLoading || checkingAccess) {
+    return <div className="min-h-screen"><Header /><div className="flex min-h-[60vh] items-center justify-center"><LoaderCircle className="h-6 w-6 animate-spin text-[#3186FF]" /></div></div>;
+  }
+
+  if (!user) {
+    return <div className="min-h-screen"><Header /><main className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-4 text-center"><ShieldCheck className="h-10 w-10 text-[#3186FF]" /><h1 className="mt-5 text-3xl font-extrabold text-[#1E1E1E]">Admin sign-in required</h1><p className="mt-3 text-sm leading-6 text-[#1E1E1E]/60">Sign in with your Google account to access the content dashboard.</p><button onClick={loginWithGoogle} className="btn-primary mt-6">Sign in with Google</button></main></div>;
+  }
+
+  if (!isAdmin) {
+    return <div className="min-h-screen"><Header /><main className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-4 text-center"><ShieldCheck className="h-10 w-10 text-[#EA4335]" /><h1 className="mt-5 text-3xl font-extrabold text-[#1E1E1E]">Access not granted</h1><p className="mt-3 text-sm leading-6 text-[#1E1E1E]/60">Your Google account is signed in, but it is not listed as an administrator.</p><Link href="/" className="btn-secondary mt-6">Return home</Link></main></div>;
+  }
+
+  return (
+    <div className="min-h-screen">
+      <Header />
+      <main className="mx-auto w-full max-w-7xl px-4 pb-20 pt-10 sm:px-6 sm:pt-16">
+        <Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-[#3186FF]"><ArrowLeft className="h-4 w-4" /> Back to trivia</Link>
+        <div className="mt-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#3186FF]">Firebase content studio</p><h1 className="mt-2 text-4xl font-extrabold text-[#1E1E1E] sm:text-6xl">Admin dashboard</h1></div><span className="rounded-full bg-[#34A853]/10 px-3 py-2 text-xs font-bold text-[#277D3E]">Admin access confirmed</span></div>
+        <section className="mt-10 grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+          <form onSubmit={saveQuestion} className="glass-card p-6 sm:p-8">
+            <div className="flex items-center gap-3"><Plus className="h-5 w-5 text-[#3186FF]" /><h2 className="text-xl font-extrabold text-[#1E1E1E]">Add a question</h2></div>
+            <textarea required value={form.question_text} onChange={event => setForm({ ...form, question_text: event.target.value })} placeholder="Question text" className="mt-6 min-h-24 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm outline-none" />
+            <div className="mt-3 grid gap-3 sm:grid-cols-2"><select value={form.category} onChange={event => setForm({ ...form, category: event.target.value as QuestionCategory })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm"><option value="geography">Geography</option><option value="world_capitals">World capitals</option><option value="landmarks">Landmarks</option><option value="history">History</option></select><select value={form.difficulty} onChange={event => setForm({ ...form, difficulty: event.target.value as DifficultyLevel })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
+            <div className="mt-3 space-y-2">{form.options.map((option, index) => <input key={index} required value={option} onChange={event => setForm({ ...form, options: form.options.map((item, itemIndex) => itemIndex === index ? event.target.value : item) })} placeholder={`Option ${String.fromCharCode(65 + index)}`} className="w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm outline-none" />)}</div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2"><select value={form.correct_option_index} onChange={event => setForm({ ...form, correct_option_index: Number(event.target.value) })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm"><option value={0}>Correct: A</option><option value={1}>Correct: B</option><option value={2}>Correct: C</option><option value={3}>Correct: D</option></select><input type="number" min={5} max={60} value={form.time_limit_seconds} onChange={event => setForm({ ...form, time_limit_seconds: Number(event.target.value) })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm" /></div>
+            <textarea required value={form.explanation} onChange={event => setForm({ ...form, explanation: event.target.value })} placeholder="Answer explanation" className="mt-3 min-h-20 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm outline-none" />
+            <button disabled={saving} className="btn-primary mt-4 w-full disabled:opacity-50">{saving ? 'Saving...' : 'Add question'}</button>
+            {message && <p className="mt-3 text-sm text-[#1E1E1E]/60">{message}</p>}
+          </form>
+
+          <section className="glass-card p-6 sm:p-8"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#34A853]">Live collection</p><h2 className="mt-2 text-xl font-extrabold text-[#1E1E1E]">Firebase questions</h2></div><span className="rounded-full bg-[#3186FF]/10 px-3 py-2 text-xs font-bold text-[#3186FF]">{questions.length} total</span></div><div className="mt-6 space-y-3">{questions.length === 0 ? <p className="rounded-xl bg-[#1E1E1E]/5 p-4 text-sm text-[#1E1E1E]/55">No Firebase questions yet. The game will continue using its local fallback set.</p> : questions.map(question => <div key={question.id} className="flex items-start justify-between gap-4 rounded-xl border border-[#1E1E1E]/8 bg-white/50 p-4"><div><p className="text-sm font-bold text-[#1E1E1E]">{question.question_text}</p><p className="mt-1 text-xs capitalize text-[#1E1E1E]/50">{question.category.replace('_', ' ')} · {question.difficulty}</p></div><button type="button" title="Delete question" onClick={() => removeQuestion(question.id)} className="rounded-full p-2 text-[#EA4335] transition-colors hover:bg-[#EA4335]/10"><Trash2 className="h-4 w-4" /></button></div>)}</div></section>
+        </section>
+
+        <form onSubmit={saveCommunityContent} className="glass-card mt-4 p-6 sm:p-8">
+          <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#EA4335]">Community content</p><h2 className="mt-2 text-2xl font-extrabold text-[#1E1E1E]">Weekly prompt, speaker, and organizers</h2></div>
+          <label className="mt-6 block text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">Question of the week<textarea value={communityContent.questionOfWeek} onChange={event => setCommunityContent({ ...communityContent, questionOfWeek: event.target.value })} className="mt-2 min-h-20 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm normal-case tracking-normal outline-none" /></label>
+          <label className="mt-4 block text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">Poll options, one per line<textarea value={communityContent.pollOptions.join('\n')} onChange={event => setCommunityContent({ ...communityContent, pollOptions: event.target.value.split('\n').map(value => value.trim()).filter(Boolean) })} className="mt-2 min-h-24 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm normal-case tracking-normal outline-none" /></label>
+          <label className="mt-4 block text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">I am adding<select value={contentType} onChange={event => setContentType(event.target.value as 'speaker' | 'organizer')} className="mt-2 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm normal-case tracking-normal outline-none"><option value="speaker">A speaker</option><option value="organizer">An organizer</option></select></label>
+          {contentType === 'speaker' && <><div className="mt-6 grid gap-3 sm:grid-cols-2"><input value={communityContent.speaker.name} onChange={event => setCommunityContent({ ...communityContent, speaker: { ...communityContent.speaker, name: event.target.value } })} placeholder="Speaker name" className="rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm" /><input value={communityContent.speaker.topic} onChange={event => setCommunityContent({ ...communityContent, speaker: { ...communityContent.speaker, topic: event.target.value } })} placeholder="Speaker topic" className="rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm" /><input value={communityContent.speaker.photoURL} onChange={event => setCommunityContent({ ...communityContent, speaker: { ...communityContent.speaker, photoURL: event.target.value } })} placeholder="Speaker photo URL" className="rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm" /><input value={communityContent.speaker.linkedin} onChange={event => setCommunityContent({ ...communityContent, speaker: { ...communityContent.speaker, linkedin: event.target.value } })} placeholder="LinkedIn URL" className="rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm" /></div><textarea value={communityContent.speaker.bio} onChange={event => setCommunityContent({ ...communityContent, speaker: { ...communityContent.speaker, bio: event.target.value } })} placeholder="Speaker bio" className="mt-3 min-h-24 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm" /></>}
+          {contentType === 'organizer' && <label className="mt-6 block text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">Organizers, one per line: Name | Role | Contact<textarea value={organizersText} onChange={event => setOrganizersText(event.target.value)} className="mt-2 min-h-24 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm normal-case tracking-normal outline-none" /></label>}
+          <button className="btn-primary mt-5">Save community content</button>
+        </form>
+      </main>
+    </div>
+  );
+}

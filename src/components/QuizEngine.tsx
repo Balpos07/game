@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuizStore } from '@/store/useQuizStore';
 import { useTimer } from '@/hooks/useTimer';
@@ -87,8 +87,8 @@ export default function QuizEngine() {
     score,
     currentStreak,
     lifelines,
-    useFiftyFifty,
-    useAddTime,
+    activateFiftyFifty,
+    activateAddTime,
   } = useQuizStore();
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -96,13 +96,29 @@ export default function QuizEngine() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [eliminatedOptions, setEliminatedOptions] = useState<number[]>([]);
+  const timerRef = useRef({ stopTimer: () => undefined, timeLeft: currentQuestion?.time_limit_seconds || 15 });
 
   const { playCorrect, playIncorrect, playTick } = useSoundEffects();
 
-  const handleTimeExpire = useCallback(() => {
-    if (!isAnswered) handleAnswer(-1);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAnswered]);
+  const handleAnswer = (index: number) => {
+    if (isAnswered || eliminatedOptions.includes(index)) return;
+    timerRef.current.stopTimer();
+    setSelectedOption(index);
+    setIsAnswered(true);
+
+    const correct = index === currentQuestion?.correct_option_index;
+    if (correct) playCorrect(); else playIncorrect();
+
+    if (currentQuestion) {
+      submitAnswer(currentQuestion.id, index, timerRef.current.timeLeft, currentQuestion.time_limit_seconds);
+    }
+  };
+
+  const handleTimeExpire = () => {
+    if (!isAnswered) {
+      handleAnswer(-1);
+    }
+  };
 
   const { timeLeft, startTimer, stopTimer, resetTimer, addTime } = useTimer(
     currentQuestion?.time_limit_seconds || 15,
@@ -110,35 +126,29 @@ export default function QuizEngine() {
   );
 
   useEffect(() => {
+    timerRef.current = {
+      stopTimer,
+      timeLeft,
+    };
+  }, [stopTimer, timeLeft]);
+
+  useEffect(() => {
     if (timeLeft <= 5 && timeLeft > 0 && !isAnswered) playTick();
   }, [timeLeft, isAnswered, playTick]);
 
   useEffect(() => {
-    if (status === 'playing' && currentQuestion) {
+    if (status !== 'playing' || !currentQuestion) return;
+
+    const frameId = window.requestAnimationFrame(() => {
       resetTimer(currentQuestion.time_limit_seconds);
       startTimer();
       setSelectedOption(null);
       setIsAnswered(false);
       setEliminatedOptions([]);
-    }
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, [currentQuestionIndex, status, currentQuestion, resetTimer, startTimer]);
-
-  const handleAnswer = useCallback(
-    (index: number) => {
-      if (isAnswered || eliminatedOptions.includes(index)) return;
-      stopTimer();
-      setSelectedOption(index);
-      setIsAnswered(true);
-
-      const correct = index === currentQuestion?.correct_option_index;
-      if (correct) playCorrect(); else playIncorrect();
-
-      if (currentQuestion) {
-        submitAnswer(currentQuestion.id, index, timeLeft, currentQuestion.time_limit_seconds);
-      }
-    },
-    [isAnswered, eliminatedOptions, stopTimer, currentQuestion, playCorrect, playIncorrect, submitAnswer, timeLeft],
-  );
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -154,7 +164,7 @@ export default function QuizEngine() {
 
   const handleFiftyFifty = () => {
     if (lifelines.fiftyFiftyUsed || isAnswered || !currentQuestion) return;
-    useFiftyFifty();
+    activateFiftyFifty();
     const wrong = [0, 1, 2, 3]
       .filter(i => i !== currentQuestion.correct_option_index)
       .sort(() => 0.5 - Math.random());
@@ -163,7 +173,7 @@ export default function QuizEngine() {
 
   const handleAddTime = () => {
     if (lifelines.addTimeUsed || isAnswered) return;
-    useAddTime();
+    activateAddTime();
     addTime(10);
   };
 

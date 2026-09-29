@@ -17,6 +17,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://devnvisuals.com"),
   title: "DevN'Visuals Trivia",
   description:
     "Play the DevN'Visuals trivia challenge. Sign in with Google and compete on the global leaderboard.",

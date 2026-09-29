@@ -16,6 +16,7 @@ export const useQuizStore = create<QuizState>((set) => ({
   score: 0,
   correctAnswersCount: 0,
   currentStreak: 0,
+  bestStreak: 0,
   status: 'idle',
   answers: [],
   lifelines: { fiftyFiftyUsed: false, addTimeUsed: false },
@@ -26,6 +27,7 @@ export const useQuizStore = create<QuizState>((set) => ({
     score: 0,
     correctAnswersCount: 0,
     currentStreak: 0,
+    bestStreak: 0,
     status: 'playing',
     answers: [],
     lifelines: { fiftyFiftyUsed: false, addTimeUsed: false },
@@ -34,16 +36,18 @@ export const useQuizStore = create<QuizState>((set) => ({
   submitAnswer: (questionId, selectedOptionIndex, timeRemainingSecs, totalTimeLimitSecs) => set((state) => {
     const question = state.questions.find(q => q.id === questionId);
     if (!question) return state;
+    if (selectedOptionIndex < -1 || selectedOptionIndex >= question.options.length) return state;
 
     const isCorrect = selectedOptionIndex === question.correct_option_index;
     const basePoints = getBasePoints(question.difficulty);
+    const safeTimeRemaining = Math.max(0, Math.min(timeRemainingSecs, totalTimeLimitSecs));
     
     // Scoring Logic: Points Earned = Base Points * SpeedMultiplier * ComboMultiplier
     let pointsEarned = 0;
-    let newStreak = isCorrect ? state.currentStreak + 1 : 0;
+    const newStreak = isCorrect ? state.currentStreak + 1 : 0;
 
     if (isCorrect) {
-      const speedMultiplier = 1 + (timeRemainingSecs / totalTimeLimitSecs);
+      const speedMultiplier = 1 + (safeTimeRemaining / totalTimeLimitSecs);
       
       // Combo multiplier: 1.2x for streak of 3+, 1.5x for streak of 5+
       let comboMultiplier = 1;
@@ -53,7 +57,7 @@ export const useQuizStore = create<QuizState>((set) => ({
       pointsEarned = Math.round(basePoints * speedMultiplier * comboMultiplier);
     }
 
-    const responseTimeMs = (totalTimeLimitSecs - timeRemainingSecs) * 1000;
+    const responseTimeMs = (totalTimeLimitSecs - safeTimeRemaining) * 1000;
 
     return {
       answers: [
@@ -63,6 +67,7 @@ export const useQuizStore = create<QuizState>((set) => ({
       score: state.score + pointsEarned,
       correctAnswersCount: state.correctAnswersCount + (isCorrect ? 1 : 0),
       currentStreak: newStreak,
+      bestStreak: Math.max(state.bestStreak, newStreak),
     };
   }),
 
@@ -74,11 +79,11 @@ export const useQuizStore = create<QuizState>((set) => ({
     return { currentQuestionIndex: nextIndex };
   }),
 
-  useFiftyFifty: () => set((state) => ({
+  activateFiftyFifty: () => set((state) => ({
     lifelines: { ...state.lifelines, fiftyFiftyUsed: true }
   })),
 
-  useAddTime: () => set((state) => ({
+  activateAddTime: () => set((state) => ({
     lifelines: { ...state.lifelines, addTimeUsed: true }
   })),
 
@@ -88,6 +93,7 @@ export const useQuizStore = create<QuizState>((set) => ({
     score: 0,
     correctAnswersCount: 0,
     currentStreak: 0,
+    bestStreak: 0,
     status: 'idle',
     answers: [],
     lifelines: { fiftyFiftyUsed: false, addTimeUsed: false },

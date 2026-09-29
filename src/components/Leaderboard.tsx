@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { Trophy, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 
 type LeaderboardEntry = {
   id: string;
@@ -12,7 +13,10 @@ type LeaderboardEntry = {
   score: number;
   date: number;
   photoURL?: string;
+  uid?: string;
 };
+
+type LeaderboardPeriod = 'all' | 'month' | 'week' | 'today';
 
 const RANK_CONFIG = [
   { label: '🥇', color: '#FBBC05', bg: 'rgba(251,188,5,0.12)', border: 'rgba(251,188,5,0.25)' },
@@ -24,14 +28,18 @@ export default function Leaderboard() {
   const [scores, setScores] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [period, setPeriod] = useState<LeaderboardPeriod>('all');
+  const { user } = useAuth();
 
   useEffect(() => {
     const db = getFirebaseDb();
-    if (!db) { setLoading(false); return; }
+    if (!db) {
+      const timer = setTimeout(() => setLoading(false), 0);
+      return () => clearTimeout(timer);
+    }
 
-    const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(10));
     const unsub = onSnapshot(
-      q,
+      collection(db, 'leaderboard'),
       snapshot => {
         setScores(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LeaderboardEntry[]);
         setError(false);
@@ -45,6 +53,23 @@ export default function Leaderboard() {
     );
     return unsub;
   }, []);
+
+  const periodStart = (() => {
+    const now = new Date();
+
+    if (period === 'today') return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    if (period === 'month') return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    if (period === 'week') return now.getTime() - (7 * 24 * 60 * 60 * 1000);
+    return 0;
+  })();
+  const filteredScores = scores
+    .filter(entry => entry.date >= periodStart)
+    .sort((first, second) => second.score - first.score || second.date - first.date);
+  const visibleScores = filteredScores.slice(0, 10);
+  const currentUserRank = user?.uid
+    ? filteredScores.findIndex(entry => entry.uid === user.uid) + 1
+    : 0;
+  const currentUserEntry = currentUserRank > 10 ? filteredScores[currentUserRank - 1] : null;
 
   return (
     <div className="glass-card mx-auto w-full max-w-lg p-4 sm:p-6 md:p-8">
@@ -60,8 +85,21 @@ export default function Leaderboard() {
         </div>
         <div>
           <h2 className="font-bold text-[#1E1E1E] text-lg leading-tight">Global Leaderboard</h2>
-          <p className="text-xs text-[#1E1E1E]/50 font-medium">Top 10 all-time scores</p>
+          <p className="text-xs text-[#1E1E1E]/50 font-medium">Top 10 scores by period</p>
         </div>
+      </div>
+
+      <div className="mb-5 grid grid-cols-4 gap-1 rounded-xl bg-[#1E1E1E]/5 p-1">
+        {(['all', 'month', 'week', 'today'] as LeaderboardPeriod[]).map(option => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => setPeriod(option)}
+            className={`rounded-lg px-2 py-2 text-xs font-bold capitalize transition-colors ${period === option ? 'bg-white text-[#3186FF] shadow-sm' : 'text-[#1E1E1E]/45 hover:text-[#1E1E1E]'}`}
+          >
+            {option === 'all' ? 'All time' : option}
+          </button>
+        ))}
       </div>
 
       {loading && (
@@ -78,16 +116,16 @@ export default function Leaderboard() {
         </p>
       )}
 
-      {!loading && !error && scores.length === 0 && (
+      {!loading && !error && filteredScores.length === 0 && (
         <div className="text-center py-8">
           <div className="text-4xl mb-2">🌟</div>
           <p className="text-[#1E1E1E]/50 text-sm font-medium">No scores yet. Be the first!</p>
         </div>
       )}
 
-      {!loading && !error && scores.length > 0 && (
+      {!loading && !error && filteredScores.length > 0 && (
         <div className="flex flex-col gap-2">
-          {scores.map((entry, idx) => {
+          {visibleScores.map((entry, idx) => {
             const rankCfg = RANK_CONFIG[idx];
             const isTop3 = idx < 3;
 
@@ -153,6 +191,12 @@ export default function Leaderboard() {
               </motion.div>
             );
           })}
+          {currentUserEntry && currentUserRank > 10 && (
+            <div className="mt-2 flex items-center justify-between rounded-2xl border border-[#3186FF]/25 bg-[#3186FF]/8 p-3 text-sm">
+              <span className="font-semibold text-[#1E1E1E]">Your rank: #{currentUserRank} ({currentUserEntry.name})</span>
+              <span className="font-bold text-[#3186FF]">{currentUserEntry.score.toLocaleString()}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

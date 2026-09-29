@@ -35,7 +35,16 @@ export function useAuth() {
       setError(null);
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorCode = error && typeof error === 'object' && 'code' in error
+        ? error.code
+        : null;
+
+      if (errorCode === 'auth/popup-closed-by-user') {
+        setError(null);
+        return;
+      }
+
       console.error("Error signing in with Google:", error);
       setError("Sign-in is unavailable. Check the Firebase Google provider and authorized domain.");
       setLoading(false);

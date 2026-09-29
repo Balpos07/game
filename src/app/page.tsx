@@ -1,20 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useQuizStore } from '@/store/useQuizStore';
 import QuizEngine from '@/components/QuizEngine';
 import { GEOGRAPHY_QUESTIONS } from '@/data/questions';
+import type { DifficultyLevel, Question, QuestionCategory } from '@/types/quiz';
 import { Trophy, Share2, Check, Sparkles, RotateCcw } from 'lucide-react';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import confetti from 'canvas-confetti';
 import Leaderboard from '@/components/Leaderboard';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// ── GDG four-color word mark ──────────────────────────────────────────────────
 function DnvWordMark() {
   return (
     <h1 className="max-w-full px-2 text-center text-3xl font-bold leading-tight text-[#1E1E1E] select-none sm:text-4xl md:px-0 md:text-5xl">
@@ -58,32 +58,68 @@ function ArrowIcon({ color = '#3186FF' }: { color?: string }) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function Home() {
-  const { startQuiz, status, score, correctAnswersCount, questions, answers, resetQuiz } =
+  const { startQuiz, status, score, correctAnswersCount, questions, answers, bestStreak, resetQuiz } =
     useQuizStore();
+  const currentAccuracy = questions.length > 0 ? Math.round((correctAnswersCount / questions.length) * 100) : 0;
   const { playFinished } = useSoundEffects();
   const [copied, setCopied] = useState(false);
-  const { user, loading: authLoading } = useAuth();
-  const [scoreSaved, setScoreSaved] = useState(false);
+  const { user, loading: authLoading, loginWithGoogle } = useAuth();
+  const [scoreSaveState, setScoreSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [scoreSaveError, setScoreSaveError] = useState<string | null>(null);
+  const [showReview, setShowReview] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<QuestionCategory | 'all'>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | 'all'>('all');
+  const [dailyChallenge, setDailyChallenge] = useState(false);
+  const [quizQuestionBank, setQuizQuestionBank] = useState(GEOGRAPHY_QUESTIONS);
+  const [questionBankReady, setQuestionBankReady] = useState(false);
+  const scoreSaveStarted = useRef(false);
+
+  const shuffleQuestions = (items: Question[], seed?: string) => {
+    const shuffled = [...items];
+    let seedValue = seed ? [...seed].reduce((total, character) => total + character.charCodeAt(0), 0) : Math.random() * 1000;
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      seedValue = (seedValue * 9301 + 49297) % 233280;
+      const swapIndex = Math.floor((seedValue / 233280) * (index + 1));
+      [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+    }
+    return shuffled;
+  };
+
+  useEffect(() => {
+    const db = getFirebaseDb();
+    if (!db) {
+      const timeoutId = setTimeout(() => setQuestionBankReady(true), 0);
+      return () => clearTimeout(timeoutId);
+    }
+    return onSnapshot(collection(db, 'questions'), snapshot => {
+      const remoteQuestions = snapshot.docs.map(item => ({ id: item.id, ...item.data() })) as Question[];
+      const mergedQuestions = new Map(GEOGRAPHY_QUESTIONS.map(question => [question.id, question]));
+      remoteQuestions.forEach(question => mergedQuestions.set(question.id, question));
+      setQuizQuestionBank([...mergedQuestions.values()]);
+      setQuestionBankReady(true);
+    }, error => {
+      console.error('Question bank error:', error);
+      setQuestionBankReady(true);
+    });
+  }, []);
+
+  const startSelectedQuiz = () => {
+    if (!questionBankReady) return;
+    const filteredQuestions = quizQuestionBank.filter(question => (
+      (selectedCategory === 'all' || question.category === selectedCategory) &&
+      (selectedDifficulty === 'all' || question.difficulty === selectedDifficulty)
+    ));
+    const dateSeed = new Date().toISOString().slice(0, 10);
+    const quizQuestions = dailyChallenge
+      ? shuffleQuestions(filteredQuestions, dateSeed).slice(0, 5)
+      : shuffleQuestions(filteredQuestions);
+    startQuiz(quizQuestions.length > 0 ? quizQuestions : quizQuestionBank);
+  };
 
   // ── Effects ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (status === 'finished') {
       playFinished();
-
-      const db = getFirebaseDb();
-      if (!authLoading && user && db && !scoreSaved) {
-        addDoc(collection(db, 'leaderboard'), {
-          uid: user.uid,
-          name: user.displayName || 'Guest Player',
-          photoURL: user.photoURL,
-          score,
-          correctAnswers: correctAnswersCount,
-          totalQuestions: questions.length,
-          date: Date.now(),
-        })
-          .then(() => setScoreSaved(true))
-          .catch(err => console.error('Error saving score:', err));
-      }
 
       // Confetti burst
       const duration = 3500;
@@ -100,7 +136,41 @@ export default function Home() {
       };
       frame();
     }
-  }, [status, startQuiz, playFinished, user, authLoading, score, scoreSaved, correctAnswersCount, questions.length]);
+  }, [status, startQuiz, playFinished]);
+
+  useEffect(() => {
+    if (status !== 'finished' || authLoading || scoreSaveStarted.current) return;
+
+    scoreSaveStarted.current = true;
+    setScoreSaveState('saving');
+    setScoreSaveError(null);
+
+    const saveScore = async () => {
+      const db = getFirebaseDb();
+      if (!db) throw new Error('Score saving is not configured.');
+      if (!user || user.isAnonymous) throw new Error('Please sign in with Google to save your score.');
+
+      await addDoc(collection(db, 'leaderboard'), {
+        uid: user.uid,
+        name: user.displayName || 'Google Player',
+        photoURL: user.photoURL,
+        score,
+        correctAnswers: correctAnswersCount,
+        totalQuestions: questions.length,
+        date: Date.now(),
+      });
+    };
+
+    saveScore()
+      .then(() => {
+        setScoreSaveState('saved');
+      })
+      .catch((error: unknown) => {
+        console.error('Error saving score:', error);
+        setScoreSaveState('error');
+        setScoreSaveError(error instanceof Error ? error.message : 'Unable to save this score.');
+      });
+  }, [status, authLoading, user, score, correctAnswersCount, questions.length]);
 
   // ── Share ──────────────────────────────────────────────────────────────────
   const generateShareText = () => {
@@ -115,7 +185,51 @@ export default function Home() {
 
   const handleShare = async () => {
     try {
-      await navigator.clipboard.writeText(generateShareText());
+      const text = generateShareText();
+      const card = await new Promise<File>((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1200;
+        canvas.height = 630;
+        const context = canvas.getContext('2d');
+        if (!context) {
+          reject(new Error('Unable to create result card.'));
+          return;
+        }
+        context.fillStyle = '#FCF4F4';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = '#3186FF';
+        context.fillRect(0, 0, 18, canvas.height);
+        context.fillStyle = '#1E1E1E';
+        context.font = '700 42px sans-serif';
+        context.fillText("DevN'Visuals Trivia", 72, 92);
+        context.font = '700 112px sans-serif';
+        context.fillStyle = '#3186FF';
+        context.fillText(String(score), 72, 250);
+        context.font = '600 26px sans-serif';
+        context.fillStyle = '#1E1E1E';
+        context.fillText('POINTS', 76, 292);
+        context.fillStyle = '#34A853';
+        context.fillText(`${correctAnswersCount}/${questions.length} correct`, 72, 380);
+        context.fillStyle = '#1E1E1E';
+        context.font = '600 24px sans-serif';
+        context.fillText(`${percentage}% accuracy`, 72, 425);
+        answers.forEach((answer, index) => {
+          context.fillStyle = answer.isCorrect ? '#34A853' : '#EA4335';
+          context.beginPath();
+          context.roundRect(700 + (index % 5) * 82, 180 + Math.floor(index / 5) * 82, 54, 54, 12);
+          context.fill();
+          context.fillStyle = '#FFFFFF';
+          context.font = '700 26px sans-serif';
+          context.fillText(answer.isCorrect ? '✓' : '×', 716 + (index % 5) * 82, 217 + Math.floor(index / 5) * 82);
+        });
+        canvas.toBlob(blob => blob ? resolve(new File([blob], 'dnv-trivia-result.png', { type: 'image/png' })) : reject(new Error('Unable to export result card.')), 'image/png');
+      });
+      if (navigator.share) {
+        if (navigator.canShare?.({ files: [card] })) await navigator.share({ title: "DevN'Visuals Trivia result", text, files: [card] });
+        else await navigator.share({ title: "DevN'Visuals Trivia result", text });
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
@@ -129,6 +243,12 @@ export default function Home() {
     percentage >= 80 ? 'Outstanding performance!' :
     percentage >= 50 ? 'Solid effort!' :
     'Keep learning!';
+  const achievements = [
+    { label: 'First finish', unlocked: questions.length > 0 },
+    { label: 'Accuracy ace', unlocked: percentage >= 80 },
+    { label: 'Streak master', unlocked: bestStreak >= 3 },
+    { label: 'Perfect run', unlocked: correctAnswersCount === questions.length && questions.length > 0 },
+  ];
 
   // ── Results screen ─────────────────────────────────────────────────────────
   if (status === 'finished') {
@@ -166,6 +286,18 @@ export default function Home() {
                 <ScoreRing value={`${percentage}%`} label="Accuracy" color="#FBBC05" />
               </div>
 
+              <div className="w-full text-left">
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#1E1E1E]/45">Achievements</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {achievements.map(achievement => (
+                    <div key={achievement.label} className={`rounded-xl border p-3 text-xs font-bold ${achievement.unlocked ? 'border-[#FBBC05]/30 bg-[#FBBC05]/10 text-[#1E1E1E]' : 'border-[#1E1E1E]/8 bg-[#1E1E1E]/3 text-[#1E1E1E]/30'}`}>
+                      <Sparkles className={`mb-1 h-3.5 w-3.5 ${achievement.unlocked ? 'text-[#FBBC05]' : 'text-[#1E1E1E]/25'}`} />
+                      {achievement.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Answer grid */}
               <div className="flex flex-wrap justify-center gap-1.5 max-w-xs">
                 {answers.map((ans, idx) => (
@@ -183,6 +315,33 @@ export default function Home() {
                 ))}
               </div>
 
+              <button
+                type="button"
+                onClick={() => setShowReview(value => !value)}
+                className="text-sm font-bold text-[#3186FF] transition-colors hover:text-[#1E1E1E]"
+              >
+                {showReview ? 'Hide answer review' : 'Review answers'}
+              </button>
+
+              {showReview && (
+                <div className="w-full space-y-3 text-left">
+                  {answers.map((answer, index) => {
+                    const question = questions.find(item => item.id === answer.questionId);
+                    if (!question) return null;
+                    return (
+                      <div key={answer.questionId} className="rounded-2xl border border-[#1E1E1E]/8 bg-white/55 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm font-bold text-[#1E1E1E]">{index + 1}. {question.question_text}</p>
+                          <span className={answer.isCorrect ? 'text-[#34A853]' : 'text-[#EA4335]'}>{answer.isCorrect ? '✓' : '✗'}</span>
+                        </div>
+                        <p className="mt-2 text-xs text-[#1E1E1E]/55">Your answer: {question.options[answer.selectedOptionIndex] || 'No answer'}</p>
+                        <p className="mt-2 text-xs leading-5 text-[#1E1E1E]/65">{question.explanation}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* CTA buttons */}
               <div className="flex flex-col gap-3 w-full">
                 <button
@@ -195,7 +354,13 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={() => { resetQuiz(); setScoreSaved(false); startQuiz(GEOGRAPHY_QUESTIONS); }}
+                  onClick={() => {
+                    resetQuiz();
+                    setScoreSaveState('idle');
+                    setScoreSaveError(null);
+                    scoreSaveStarted.current = false;
+                    startSelectedQuiz();
+                  }}
                   className="btn-secondary w-full !py-3.5 !text-base"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -203,11 +368,11 @@ export default function Home() {
                 </button>
               </div>
 
-              {!user && (
-                <p className="text-sm text-[#1E1E1E]/50">
-                  Sign in to save your score to the leaderboard ↑
-                </p>
-              )}
+              <p className={`text-sm ${scoreSaveState === 'error' ? 'text-[#EA4335]' : 'text-[#1E1E1E]/50'}`}>
+                {scoreSaveState === 'saving' && 'Saving your score...'}
+                {scoreSaveState === 'saved' && `Score saved${user ? ` for ${user.displayName || 'you'}` : ' to the leaderboard'}!`}
+                {scoreSaveState === 'error' && (scoreSaveError || 'Your score could not be saved. Please try again.')}
+              </p>
             </motion.div>
           </AnimatePresence>
 
@@ -259,14 +424,67 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {status === 'idle' && (
+        {status === 'idle' && authLoading && (
+          <div className="mb-8 h-12 w-full max-w-xs animate-pulse rounded-full bg-[#1E1E1E]/10" />
+        )}
+
+        {status === 'idle' && !authLoading && (!user || user.isAnonymous) && (
           <button
-            onClick={() => startQuiz(GEOGRAPHY_QUESTIONS)}
+            onClick={loginWithGoogle}
             className="btn-primary mb-8 !py-3.5 !px-8 !text-base"
           >
-            Start Trivia
+            Sign in with Google to play
             <ArrowIcon />
           </button>
+        )}
+
+        {status === 'idle' && !authLoading && user && !user.isAnonymous && (
+          <div className="mb-8 w-full max-w-xl rounded-3xl border border-[#1E1E1E]/8 bg-white/50 p-4 shadow-sm backdrop-blur sm:p-5">
+            <div className="mb-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-[#1E1E1E]/8 bg-[#3186FF]/5 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#1E1E1E]/45">Best streak</p>
+                <p className="mt-2 text-2xl font-extrabold text-[#1E1E1E]">{bestStreak}</p>
+              </div>
+              <div className="rounded-2xl border border-[#1E1E1E]/8 bg-[#34A853]/5 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#1E1E1E]/45">Accuracy</p>
+                <p className="mt-2 text-2xl font-extrabold text-[#1E1E1E]">{currentAccuracy}%</p>
+              </div>
+              <div className="rounded-2xl border border-[#1E1E1E]/8 bg-[#FBBC05]/10 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#1E1E1E]/45">Daily</p>
+                <p className="mt-2 text-lg font-extrabold text-[#1E1E1E]">{dailyChallenge ? 'On' : 'Off'}</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-left text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/50">
+                Category
+                <select value={selectedCategory} onChange={event => setSelectedCategory(event.target.value as QuestionCategory | 'all')} className="mt-2 w-full rounded-xl border border-[#1E1E1E]/10 bg-white px-3 py-3 text-sm font-semibold normal-case tracking-normal text-[#1E1E1E] outline-none">
+                  <option value="all">All categories</option>
+                  <option value="world_capitals">World capitals</option>
+                  <option value="geography">Geography</option>
+                  <option value="landmarks">Landmarks</option>
+                  <option value="history">History</option>
+                </select>
+              </label>
+              <label className="text-left text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/50">
+                Difficulty
+                <select value={selectedDifficulty} onChange={event => setSelectedDifficulty(event.target.value as DifficultyLevel | 'all')} className="mt-2 w-full rounded-xl border border-[#1E1E1E]/10 bg-white px-3 py-3 text-sm font-semibold normal-case tracking-normal text-[#1E1E1E] outline-none">
+                  <option value="all">All levels</option>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </label>
+            </div>
+            <label className="mt-3 flex items-center gap-3 rounded-xl border border-[#3186FF]/15 bg-[#3186FF]/5 p-3 text-sm font-semibold text-[#1E1E1E]">
+              <input type="checkbox" checked={dailyChallenge} onChange={event => setDailyChallenge(event.target.checked)} className="h-4 w-4 accent-[#3186FF]" />
+              Daily challenge: five questions, one attempt
+            </label>
+            <button disabled={!questionBankReady} onClick={startSelectedQuiz} className="btn-primary mt-4 w-full !py-3.5 !text-base disabled:cursor-wait disabled:opacity-50">
+              {questionBankReady ? 'Start Trivia' : 'Loading question bank...'}
+              <ArrowIcon />
+            </button>
+          </div>
         )}
 
         {/* Quiz engine */}

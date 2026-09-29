@@ -5,18 +5,24 @@ export const useTimer = (initialSeconds: number, onExpire: () => void) => {
   const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    let intervalId: NodeJS.Timeout | undefined;
 
     if (isRunning && timeLeft > 0) {
       intervalId = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (isRunning && timeLeft === 0) {
-      setIsRunning(false);
-      onExpire();
+      const timeoutId = setTimeout(() => {
+        setIsRunning(false);
+        onExpire();
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
     }
 
-    return () => clearInterval(intervalId);
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isRunning, timeLeft, onExpire]);
 
   const startTimer = useCallback(() => {

@@ -7,7 +7,13 @@ export function useSoundEffects() {
     // Initialize lazily to respect browser autoplay policies
     const initAudio = () => {
       if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const audioWindow = window as Window & {
+          webkitAudioContext?: typeof AudioContext;
+        };
+        const AudioCtor = window.AudioContext ?? audioWindow.webkitAudioContext;
+        if (AudioCtor) {
+          audioCtxRef.current = new AudioCtor();
+        }
       }
     };
     window.addEventListener('click', initAudio, { once: true });

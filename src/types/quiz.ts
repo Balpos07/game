@@ -25,6 +25,7 @@ export interface QuizState {
   score: number;
   correctAnswersCount: number;
   currentStreak: number;
+  bestStreak: number;
   status: 'idle' | 'playing' | 'finished';
   lifelines: Lifelines;
   answers: {
@@ -39,7 +40,7 @@ export interface QuizState {
   startQuiz: (questions: Question[]) => void;
   submitAnswer: (questionId: string, selectedOptionIndex: number, timeRemainingSecs: number, totalTimeLimitSecs: number) => void;
   nextQuestion: () => void;
-  useFiftyFifty: () => void;
-  useAddTime: () => void;
+  activateFiftyFifty: () => void;
+  activateAddTime: () => void;
   resetQuiz: () => void;
 }
