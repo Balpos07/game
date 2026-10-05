@@ -22,16 +22,12 @@ export default function SpeakerProfileContent() {
     <>
       <section className="mt-12 grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
         <div className="flex aspect-[4/5] max-w-sm items-center justify-center overflow-hidden rounded-[2rem] bg-[#3186FF]/10 text-8xl font-extrabold text-[#3186FF]">
-          {speaker.photoURL ? (
-            <img
-              src={speaker.photoURL}
-              alt={speaker.name}
-              className="h-full w-full object-cover"
-              style={{ objectPosition: 'center 18%' }}
-            />
-          ) : (
-            'S'
-          )}
+          <img
+            src={speaker.photoURL || '/organizers/Speaker.jpg'}
+            alt={speaker.name}
+            className="h-full w-full object-cover"
+            style={{ objectPosition: 'center 18%' }}
+          />
         </div>
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#3186FF]">Featured speaker</p>

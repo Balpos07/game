@@ -39,7 +39,7 @@ export default function NextSessionPage() {
 
         <section className="mt-14 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="relative min-h-[360px] overflow-hidden rounded-[2rem] border-8 border-white/70 bg-[#1E1E1E] shadow-[0_24px_70px_rgba(30,30,30,0.16)] sm:min-h-[440px]">
-            <Image src="/dnv.png" alt="DevN'Visuals community session" fill sizes="(max-width: 1024px) 100vw, 65vw" className="object-cover" />
+            <Image src="/dnv-new.png" alt="DevN'Visuals community session" fill sizes="(max-width: 1024px) 100vw, 65vw" className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#1E1E1E]/80 via-transparent to-transparent" />
             <div className="absolute bottom-0 left-0 p-6 text-white sm:p-8">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/65">Save the idea</p>

@@ -82,7 +82,7 @@ export default function CommunityPage() {
             <div className="absolute -right-5 -top-5 z-10 hidden h-24 w-24 rounded-full border border-[#FBBC05]/30 bg-[#FBBC05]/15 sm:block" />
             <div className="relative overflow-hidden rounded-[2rem] border-8 border-white/70 bg-[#1E1E1E] shadow-[0_24px_70px_rgba(30,30,30,0.18)]">
               <Image
-                src="/dnv.png"
+                src="/dnv-new.png"
                 width={1080}
                 height={1350}
                 alt="A group of people connecting at a community gathering"
