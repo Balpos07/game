@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useQuizStore } from '@/store/useQuizStore';
 import QuizEngine from '@/components/QuizEngine';
-import { GEOGRAPHY_QUESTIONS } from '@/data/questions';
+import { TECH_TRIVIA_QUESTIONS } from '@/data/questions';
 import type { DifficultyLevel, Question, QuestionCategory } from '@/types/quiz';
 import { Trophy, Share2, Check, Sparkles, RotateCcw } from 'lucide-react';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
@@ -70,7 +70,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<QuestionCategory | 'all'>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | 'all'>('all');
   const [dailyChallenge, setDailyChallenge] = useState(false);
-  const [quizQuestionBank, setQuizQuestionBank] = useState(GEOGRAPHY_QUESTIONS);
+  const [quizQuestionBank, setQuizQuestionBank] = useState(TECH_TRIVIA_QUESTIONS);
   const [questionBankReady, setQuestionBankReady] = useState(false);
   const scoreSaveStarted = useRef(false);
 
@@ -93,7 +93,7 @@ export default function Home() {
     }
     return onSnapshot(collection(db, 'questions'), snapshot => {
       const remoteQuestions = snapshot.docs.map(item => ({ id: item.id, ...item.data() })) as Question[];
-      const mergedQuestions = new Map(GEOGRAPHY_QUESTIONS.map(question => [question.id, question]));
+      const mergedQuestions = new Map(TECH_TRIVIA_QUESTIONS.map(question => [question.id, question]));
       remoteQuestions.forEach(question => mergedQuestions.set(question.id, question));
       setQuizQuestionBank([...mergedQuestions.values()]);
       setQuestionBankReady(true);
@@ -464,6 +464,7 @@ export default function Home() {
                   <option value="geography">Geography</option>
                   <option value="landmarks">Landmarks</option>
                   <option value="history">History</option>
+                  <option value="technology">Technology</option>
                 </select>
               </label>
               <label className="text-left text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/50">

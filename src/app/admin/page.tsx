@@ -2,16 +2,17 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
-import { ArrowLeft, LoaderCircle, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, setDoc, writeBatch } from 'firebase/firestore';
+import { ArrowLeft, LoaderCircle, Plus, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { getFirebaseDb } from '@/lib/firebase';
 import type { DifficultyLevel, Question, QuestionCategory } from '@/types/quiz';
 import { CommunityContent, DEFAULT_COMMUNITY_CONTENT } from '@/types/community';
+import { TECH_TRIVIA_QUESTIONS } from '@/data/questions';
 
 const emptyForm = {
-  category: 'geography' as QuestionCategory,
+  category: 'technology' as QuestionCategory,
   difficulty: 'easy' as DifficultyLevel,
   question_text: '',
   options: ['', '', '', ''],
@@ -29,6 +30,7 @@ export default function AdminPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [replacingQuestions, setReplacingQuestions] = useState(false);
   const [message, setMessage] = useState('');
   const [communityContent, setCommunityContent] = useState<CommunityContent>(DEFAULT_COMMUNITY_CONTENT);
   const [organizersText, setOrganizersText] = useState('');
@@ -114,6 +116,42 @@ export default function AdminPage() {
     await deleteDoc(doc(db, 'questions', questionId));
   };
 
+  const replaceQuestionBank = async () => {
+    if (!window.confirm('Replace every question in Firebase with the 15 weekly technology trivia questions? This cannot be undone.')) return;
+
+    const db = getFirebaseDb();
+    if (!db) {
+      setMessage('Firebase is not configured.');
+      return;
+    }
+
+    setReplacingQuestions(true);
+    setMessage('');
+    try {
+      const questionSnapshot = await getDocs(collection(db, 'questions'));
+      const questionIds = new Set(TECH_TRIVIA_QUESTIONS.map(question => question.id));
+      const oldQuestionCount = questionSnapshot.docs.filter(question => !questionIds.has(question.id)).length;
+      if (oldQuestionCount + TECH_TRIVIA_QUESTIONS.length > 500) {
+        throw new Error('The Firebase question collection is too large to replace in a single batch.');
+      }
+
+      const batch = writeBatch(db);
+      questionSnapshot.docs.forEach(question => {
+        if (!questionIds.has(question.id)) batch.delete(question.ref);
+      });
+      TECH_TRIVIA_QUESTIONS.forEach(question => {
+        batch.set(doc(db, 'questions', question.id), question);
+      });
+      await batch.commit();
+      setMessage('Firebase question bank replaced with all 15 weekly technology trivia questions.');
+    } catch (error) {
+      console.error('Question bank replacement failed:', error);
+      setMessage(error instanceof Error ? error.message : 'Could not replace the Firebase question bank.');
+    } finally {
+      setReplacingQuestions(false);
+    }
+  };
+
   if (authLoading || checkingAccess) {
     return <div className="min-h-screen"><Header /><div className="flex min-h-[60vh] items-center justify-center"><LoaderCircle className="h-6 w-6 animate-spin text-[#3186FF]" /></div></div>;
   }
@@ -136,7 +174,7 @@ export default function AdminPage() {
           <form onSubmit={saveQuestion} className="glass-card p-6 sm:p-8">
             <div className="flex items-center gap-3"><Plus className="h-5 w-5 text-[#3186FF]" /><h2 className="text-xl font-extrabold text-[#1E1E1E]">Add a question</h2></div>
             <textarea required value={form.question_text} onChange={event => setForm({ ...form, question_text: event.target.value })} placeholder="Question text" className="mt-6 min-h-24 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm outline-none" />
-            <div className="mt-3 grid gap-3 sm:grid-cols-2"><select value={form.category} onChange={event => setForm({ ...form, category: event.target.value as QuestionCategory })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm"><option value="geography">Geography</option><option value="world_capitals">World capitals</option><option value="landmarks">Landmarks</option><option value="history">History</option></select><select value={form.difficulty} onChange={event => setForm({ ...form, difficulty: event.target.value as DifficultyLevel })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2"><select value={form.category} onChange={event => setForm({ ...form, category: event.target.value as QuestionCategory })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm"><option value="geography">Geography</option><option value="world_capitals">World capitals</option><option value="landmarks">Landmarks</option><option value="history">History</option><option value="technology">Technology</option></select><select value={form.difficulty} onChange={event => setForm({ ...form, difficulty: event.target.value as DifficultyLevel })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
             <div className="mt-3 space-y-2">{form.options.map((option, index) => <input key={index} required value={option} onChange={event => setForm({ ...form, options: form.options.map((item, itemIndex) => itemIndex === index ? event.target.value : item) })} placeholder={`Option ${String.fromCharCode(65 + index)}`} className="w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm outline-none" />)}</div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2"><select value={form.correct_option_index} onChange={event => setForm({ ...form, correct_option_index: Number(event.target.value) })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm"><option value={0}>Correct: A</option><option value={1}>Correct: B</option><option value={2}>Correct: C</option><option value={3}>Correct: D</option></select><input type="number" min={5} max={60} value={form.time_limit_seconds} onChange={event => setForm({ ...form, time_limit_seconds: Number(event.target.value) })} className="rounded-xl border border-[#1E1E1E]/10 bg-white p-3 text-sm" /></div>
             <textarea required value={form.explanation} onChange={event => setForm({ ...form, explanation: event.target.value })} placeholder="Answer explanation" className="mt-3 min-h-20 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm outline-none" />
@@ -144,7 +182,7 @@ export default function AdminPage() {
             {message && <p className="mt-3 text-sm text-[#1E1E1E]/60">{message}</p>}
           </form>
 
-          <section className="glass-card p-6 sm:p-8"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#34A853]">Live collection</p><h2 className="mt-2 text-xl font-extrabold text-[#1E1E1E]">Firebase questions</h2></div><span className="rounded-full bg-[#3186FF]/10 px-3 py-2 text-xs font-bold text-[#3186FF]">{questions.length} total</span></div><div className="mt-6 space-y-3">{questions.length === 0 ? <p className="rounded-xl bg-[#1E1E1E]/5 p-4 text-sm text-[#1E1E1E]/55">No Firebase questions yet. The game will continue using its local fallback set.</p> : questions.map(question => <div key={question.id} className="flex items-start justify-between gap-4 rounded-xl border border-[#1E1E1E]/8 bg-white/50 p-4"><div><p className="text-sm font-bold text-[#1E1E1E]">{question.question_text}</p><p className="mt-1 text-xs capitalize text-[#1E1E1E]/50">{question.category.replace('_', ' ')} · {question.difficulty}</p></div><button type="button" title="Delete question" onClick={() => removeQuestion(question.id)} className="rounded-full p-2 text-[#EA4335] transition-colors hover:bg-[#EA4335]/10"><Trash2 className="h-4 w-4" /></button></div>)}</div></section>
+          <section className="glass-card p-6 sm:p-8"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#34A853]">Live collection</p><h2 className="mt-2 text-xl font-extrabold text-[#1E1E1E]">Firebase questions</h2></div><span className="rounded-full bg-[#3186FF]/10 px-3 py-2 text-xs font-bold text-[#3186FF]">{questions.length} total</span></div><button type="button" onClick={replaceQuestionBank} disabled={replacingQuestions || saving} className="btn-secondary mt-5 w-full justify-center disabled:cursor-wait disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${replacingQuestions ? 'animate-spin' : ''}`} />{replacingQuestions ? 'Replacing questions...' : 'Replace with this week’s 15 questions'}</button><p className="mt-2 text-xs leading-5 text-[#1E1E1E]/50">This removes the existing Firebase question set and installs the 15 weekly tech questions.</p><div className="mt-6 space-y-3">{questions.length === 0 ? <p className="rounded-xl bg-[#1E1E1E]/5 p-4 text-sm text-[#1E1E1E]/55">No Firebase questions yet. The game will continue using its local fallback set.</p> : questions.map(question => <div key={question.id} className="flex items-start justify-between gap-4 rounded-xl border border-[#1E1E1E]/8 bg-white/50 p-4"><div><p className="text-sm font-bold text-[#1E1E1E]">{question.question_text}</p><p className="mt-1 text-xs capitalize text-[#1E1E1E]/50">{question.category.replace('_', ' ')} · {question.difficulty}</p></div><button type="button" title="Delete question" onClick={() => removeQuestion(question.id)} className="rounded-full p-2 text-[#EA4335] transition-colors hover:bg-[#EA4335]/10"><Trash2 className="h-4 w-4" /></button></div>)}</div></section>
         </section>
 
         <form onSubmit={saveCommunityContent} className="glass-card mt-4 p-6 sm:p-8">

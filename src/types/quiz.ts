@@ -1,4 +1,4 @@
-export type QuestionCategory = 'world_capitals' | 'geography' | 'landmarks' | 'history';
+export type QuestionCategory = 'world_capitals' | 'geography' | 'landmarks' | 'history' | 'technology';
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
 export interface Question {
