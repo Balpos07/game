@@ -93,9 +93,7 @@ export default function Home() {
     }
     return onSnapshot(collection(db, 'questions'), snapshot => {
       const remoteQuestions = snapshot.docs.map(item => ({ id: item.id, ...item.data() })) as Question[];
-      const mergedQuestions = new Map(TECH_TRIVIA_QUESTIONS.map(question => [question.id, question]));
-      remoteQuestions.forEach(question => mergedQuestions.set(question.id, question));
-      setQuizQuestionBank([...mergedQuestions.values()]);
+      setQuizQuestionBank(remoteQuestions.length > 0 ? remoteQuestions : TECH_TRIVIA_QUESTIONS);
       setQuestionBankReady(true);
     }, error => {
       console.error('Question bank error:', error);
