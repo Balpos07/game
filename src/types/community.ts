@@ -28,7 +28,7 @@ export const DEFAULT_COMMUNITY_CONTENT: CommunityContent = {
     name: 'Oluwasusi Stephen',
     bio: 'Scientific Officer - NASRDA / CTO - Spurwiz',
     topic: 'Things They Don\'t Teach You in Tech',
-    photoURL: '',
+    photoURL: '/organizers/Speaker.jpg',
     linkedin: 'https://www.linkedin.com/company/devnvisuals/',
     instagram: 'https://www.instagram.com/devnvisuals/',
   },

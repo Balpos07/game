@@ -50,8 +50,12 @@ export default function CommunityPage() {
 
               <div className="mx-auto w-full max-w-[430px]">
                 <div className="rounded-[2rem] border-[3px] border-[#1E1E1E] bg-[#ece8e4] p-4 shadow-[0_20px_30px_rgba(17,17,17,0.12)]">
-                  <div className="overflow-hidden rounded-[1.4rem] border-[3px] border-[#1E1E1E] bg-[radial-gradient(circle_at_30%_20%,#f4f4f4_0%,#cfcfcf_25%,#757575_62%,#1a1a1a_100%)] p-3">
-                    <div className="aspect-[4/5] rounded-[1rem] border-[2px] border-[#1E1E1E] bg-[radial-gradient(circle_at_40%_35%,rgba(255,255,255,0.8),rgba(111,111,111,0.35)_20%,rgba(20,20,20,0.9)_70%)]" />
+                  <div className="overflow-hidden rounded-[1.4rem] border-[3px] border-[#1E1E1E] bg-[#d8d8d8] p-3">
+                    <img
+                      src="/organizers/Speaker.jpg"
+                      alt="Oluwasusi Stephen"
+                      className="aspect-[4/5] w-full rounded-[1rem] border-[2px] border-[#1E1E1E] object-cover object-center"
+                    />
                   </div>
                   <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#1E1E1E]/15 pt-3">
                     <div className="flex items-center gap-2">
