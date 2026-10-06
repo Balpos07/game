@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, setDoc, writeBatch } from 'firebase/firestore';
-import { ArrowLeft, LoaderCircle, Pencil, Plus, RefreshCw, ShieldCheck, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Download, LoaderCircle, Pencil, Plus, RefreshCw, ShieldCheck, Trash2, Upload, X } from 'lucide-react';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { getFirebaseDb } from '@/lib/firebase';
@@ -22,6 +22,146 @@ const emptyForm = {
   time_limit_seconds: 15,
 };
 
+type ImportedQuestion = Omit<Question, 'id'>;
+
+const QUESTION_CSV_HEADERS = [
+  'question_text',
+  'category',
+  'difficulty',
+  'option_a',
+  'option_b',
+  'option_c',
+  'option_d',
+  'correct_option',
+  'explanation',
+  'time_limit_seconds',
+  'hint_emoji',
+  'code_snippet',
+];
+
+const QUESTION_CSV_TEMPLATE = [
+  QUESTION_CSV_HEADERS.join(','),
+  [
+    'Which city is the capital of Nigeria?',
+    'geography',
+    'easy',
+    'Lagos',
+    'Abuja',
+    'Kano',
+    'Ibadan',
+    'B',
+    'Abuja is the capital city of Nigeria.',
+    '15',
+    '',
+    '',
+  ].map(value => `"${value.replaceAll('"', '""')}"`).join(','),
+].join('\r\n');
+
+function parseQuestionCsv(csv: string): { questions: ImportedQuestion[]; errors: string[] } {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let quoted = false;
+
+  for (let index = 0; index < csv.length; index += 1) {
+    const character = csv[index];
+    if (quoted) {
+      if (character === '"' && csv[index + 1] === '"') {
+        field += '"';
+        index += 1;
+      } else if (character === '"') {
+        quoted = false;
+      } else {
+        field += character;
+      }
+    } else if (character === '"' && field.length === 0) {
+      quoted = true;
+    } else if (character === ',') {
+      row.push(field);
+      field = '';
+    } else if (character === '\n' || character === '\r') {
+      if (character === '\r' && csv[index + 1] === '\n') index += 1;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = '';
+    } else {
+      field += character;
+    }
+  }
+
+  if (quoted) return { questions: [], errors: ['The CSV contains an unfinished quoted field.'] };
+  if (field || row.length) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  const headers = (rows.shift() ?? []).map(header => header.trim().replace(/^\uFEFF/, '').toLowerCase());
+  const missingHeaders = QUESTION_CSV_HEADERS.slice(0, 9).filter(header => !headers.includes(header));
+  if (missingHeaders.length) {
+    return { questions: [], errors: [`Missing required column${missingHeaders.length > 1 ? 's' : ''}: ${missingHeaders.join(', ')}.`] };
+  }
+
+  const column = (record: string[], name: string) => record[headers.indexOf(name)]?.trim() ?? '';
+  const questions: ImportedQuestion[] = [];
+  const errors: string[] = [];
+
+  rows.forEach((record, index) => {
+    if (record.every(value => !value.trim())) return;
+    const rowNumber = index + 2;
+    const questionText = column(record, 'question_text');
+    const categoryValue = column(record, 'category').toLowerCase();
+    const category = QUESTION_CATEGORIES.find(option =>
+      option.value === categoryValue || option.label.toLowerCase() === categoryValue
+    )?.value;
+    const difficultyValue = column(record, 'difficulty').toLowerCase();
+    const difficulty: DifficultyLevel | undefined =
+      difficultyValue === 'easy' || difficultyValue === 'medium' || difficultyValue === 'hard'
+        ? difficultyValue
+        : undefined;
+    const options = ['a', 'b', 'c', 'd'].map(option => column(record, `option_${option}`));
+    const correctValue = column(record, 'correct_option').toUpperCase();
+    const correctOptionIndex = /^[A-D]$/.test(correctValue)
+      ? correctValue.charCodeAt(0) - 65
+      : /^[1-4]$/.test(correctValue) ? Number(correctValue) - 1 : -1;
+    const explanation = column(record, 'explanation');
+    const timeValue = column(record, 'time_limit_seconds');
+    const timeLimit = timeValue ? Number(timeValue) : 15;
+    const rowErrors: string[] = [];
+
+    if (!questionText) rowErrors.push('question_text is required');
+    if (!category) rowErrors.push('category must be a supported category name or ID');
+    if (!difficulty) rowErrors.push('difficulty must be easy, medium, or hard');
+    if (options.some(option => !option)) rowErrors.push('all four options are required');
+    if (correctOptionIndex < 0) rowErrors.push('correct_option must be A-D or 1-4');
+    if (!explanation) rowErrors.push('explanation is required');
+    if (!Number.isInteger(timeLimit) || timeLimit < 5 || timeLimit > 60) {
+      rowErrors.push('time_limit_seconds must be a whole number from 5 to 60');
+    }
+
+    if (rowErrors.length || !category || !difficulty) {
+      errors.push(`Row ${rowNumber}: ${rowErrors.join('; ')}.`);
+      return;
+    }
+
+    questions.push({
+      category,
+      difficulty,
+      question_text: questionText,
+      options,
+      correct_option_index: correctOptionIndex,
+      explanation,
+      time_limit_seconds: timeLimit,
+      ...(column(record, 'hint_emoji') ? { hint_emoji: column(record, 'hint_emoji') } : {}),
+      ...(column(record, 'code_snippet') ? { code_snippet: column(record, 'code_snippet') } : {}),
+    });
+  });
+
+  if (!questions.length && !errors.length) errors.push('The CSV has no question rows to import.');
+  if (questions.length > 500) errors.push('Import up to 500 questions at a time.');
+  return { questions, errors };
+}
+
 export default function AdminPage() {
   const { user, loading: authLoading, loginWithGoogle } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -33,6 +173,10 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [replacingQuestions, setReplacingQuestions] = useState(false);
   const [message, setMessage] = useState('');
+  const [importQuestions, setImportQuestions] = useState<ImportedQuestion[]>([]);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importStatus, setImportStatus] = useState('');
+  const [importingQuestions, setImportingQuestions] = useState(false);
   const [communityContent, setCommunityContent] = useState<CommunityContent>(DEFAULT_COMMUNITY_CONTENT);
   const [organizersText, setOrganizersText] = useState('');
   const [contentType, setContentType] = useState<'speaker' | 'organizer'>('speaker');
@@ -186,6 +330,55 @@ export default function AdminPage() {
     }
   };
 
+  const readQuestionCsv = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportQuestions([]);
+    setImportErrors([]);
+    setImportStatus('');
+    try {
+      const result = parseQuestionCsv(await file.text());
+      setImportQuestions(result.questions);
+      setImportErrors(result.errors);
+      setImportStatus(result.errors.length
+        ? 'Fix the CSV issues below, then choose the file again.'
+        : `${result.questions.length} questions are ready to import.`);
+    } catch (error) {
+      console.error('Question CSV read failed:', error);
+      setImportStatus('Could not read this file. Please choose a valid CSV file.');
+    }
+  };
+
+  const importQuestionCsv = async () => {
+    const db = getFirebaseDb();
+    if (!db) {
+      setImportStatus('Firebase is not configured.');
+      return;
+    }
+    if (!importQuestions.length || importErrors.length) return;
+
+    setImportingQuestions(true);
+    setImportStatus('');
+    try {
+      const batch = writeBatch(db);
+      importQuestions.forEach(question => {
+        const questionId = crypto.randomUUID();
+        batch.set(doc(db, 'questions', questionId), { ...question, id: questionId });
+      });
+      await batch.commit();
+      setImportStatus(`Successfully imported ${importQuestions.length} questions.`);
+      setImportQuestions([]);
+    } catch (error) {
+      console.error('Question CSV import failed:', error);
+      setImportStatus(error instanceof Error
+        ? `Import failed: ${error.message}`
+        : 'Could not import the questions. Check Firebase permissions and try again.');
+    } finally {
+      setImportingQuestions(false);
+    }
+  };
+
   if (authLoading || checkingAccess) {
     return <div className="min-h-screen"><Header /><div className="flex min-h-[60vh] items-center justify-center"><LoaderCircle className="h-6 w-6 animate-spin text-[#3186FF]" /></div></div>;
   }
@@ -231,7 +424,32 @@ export default function AdminPage() {
             {message && <p className="mt-3 text-sm text-[#1E1E1E]/60">{message}</p>}
           </form>
 
-          <section className="glass-card p-5 sm:p-7"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#38785A]">Live question bank</p><h2 className="mt-2 text-xl font-extrabold text-[#28231F]">Playable questions</h2></div><span className="rounded-full bg-[#38785A]/10 px-3 py-2 text-xs font-bold text-[#38785A]">{questions.length} total</span></div><div className="mt-4 flex flex-wrap gap-2">{QUESTION_CATEGORIES.map(category => { const count = questions.filter(question => question.category === category.value).length; return <span key={category.value} className="rounded-full border border-[#28231F]/8 bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#28231F]/65">{category.label} <strong className="text-[#54417A]">{count}</strong></span>; })}</div><button type="button" onClick={replaceQuestionBank} disabled={replacingQuestions || saving} className="btn-secondary mt-5 w-full justify-center disabled:cursor-wait disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${replacingQuestions ? 'animate-spin' : ''}`} />{replacingQuestions ? 'Replacing questions...' : `Replace with all ${DEFAULT_TRIVIA_QUESTIONS.length} starter questions`}</button><p className="mt-2 text-xs leading-5 text-[#28231F]/50">This replaces the Firebase bank with the starter questions. Categories and difficulty values match the playable quiz.</p><div className="mt-6 space-y-3">{questions.map(question => <div id={`question-${question.id}`} key={question.id} className="scroll-mt-24 flex items-start justify-between gap-4 rounded-xl border border-[#28231F]/8 bg-white/65 p-4"><div className="min-w-0"><p className="text-sm font-bold text-[#28231F]">{question.question_text}</p><p className="mt-1 text-xs text-[#28231F]/50">{getQuestionCategoryLabel(question.category)} · {question.difficulty}{firebaseQuestionIds.has(question.id) ? '' : ' · local question'}</p></div><div className="flex shrink-0 items-center gap-1"><button type="button" title="Edit question" aria-label={`Edit question: ${question.question_text}`} onClick={() => editQuestion(question)} className="rounded-full p-2 text-[#54417A] transition-colors hover:bg-[#54417A]/10"><Pencil className="h-4 w-4" /></button><button type="button" title={firebaseQuestionIds.has(question.id) ? 'Delete question' : 'Local question cannot be deleted here'} aria-label={`Delete question: ${question.question_text}`} disabled={!firebaseQuestionIds.has(question.id)} onClick={() => removeQuestion(question.id)} className="rounded-full p-2 text-[#C44737] transition-colors hover:bg-[#C44737]/10 disabled:cursor-not-allowed disabled:opacity-30"><Trash2 className="h-4 w-4" /></button></div></div>)}</div></section>
+          <section className="glass-card p-5 sm:p-7">
+            <div className="flex items-center justify-between gap-3">
+              <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#38785A]">Live question bank</p><h2 className="mt-2 text-xl font-extrabold text-[#28231F]">Playable questions</h2></div>
+              <span className="rounded-full bg-[#38785A]/10 px-3 py-2 text-xs font-bold text-[#38785A]">{questions.length} total</span>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">{QUESTION_CATEGORIES.map(category => { const count = questions.filter(question => question.category === category.value).length; return <span key={category.value} className="rounded-full border border-[#28231F]/8 bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#28231F]/65">{category.label} <strong className="text-[#54417A]">{count}</strong></span>; })}</div>
+
+            <div className="mt-6 rounded-2xl border border-[#54417A]/15 bg-white/55 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div><h3 className="font-extrabold text-[#28231F]">Import questions in bulk</h3><p className="mt-1 text-xs leading-5 text-[#28231F]/55">Upload a spreadsheet saved as CSV. Imports add new questions without replacing existing ones (up to 500 at a time).</p></div>
+                <a href={`data:text/csv;charset=utf-8,${encodeURIComponent(QUESTION_CSV_TEMPLATE)}`} download="trivia-questions-template.csv" className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#28231F]/10 bg-white px-3 py-2 text-xs font-bold text-[#54417A] hover:bg-[#54417A]/5"><Download className="h-4 w-4" /> Download template</a>
+              </div>
+              <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#54417A]/30 bg-white/70 px-4 py-4 text-sm font-bold text-[#54417A] transition hover:border-[#54417A]/60 hover:bg-white">
+                <Upload className="h-4 w-4" /> Choose a CSV file
+                <input type="file" accept=".csv,text/csv" onChange={readQuestionCsv} className="sr-only" />
+              </label>
+              <p className="mt-2 text-xs leading-5 text-[#28231F]/50">Required columns: question_text, category, difficulty, option_a–option_d, correct_option, explanation. Category can be its ID or display name. Correct answer can be A–D or 1–4.</p>
+              {importStatus && <p role="status" className="mt-3 text-sm font-semibold text-[#38785A]">{importStatus}</p>}
+              {importErrors.length > 0 && <ul className="mt-2 max-h-36 list-inside list-disc space-y-1 overflow-auto rounded-xl bg-[#C44737]/5 p-3 text-xs text-[#A43E32]">{importErrors.slice(0, 8).map((error, index) => <li key={`${index}-${error}`}>{error}</li>)}{importErrors.length > 8 && <li>And {importErrors.length - 8} more issue(s).</li>}</ul>}
+              {importQuestions.length > 0 && importErrors.length === 0 && <button type="button" onClick={importQuestionCsv} disabled={importingQuestions || saving || replacingQuestions} className="btn-primary mt-3 w-full justify-center disabled:cursor-wait disabled:opacity-50"><Upload className="h-4 w-4" />{importingQuestions ? 'Importing questions...' : `Import ${importQuestions.length} questions`}</button>}
+            </div>
+
+            <button type="button" onClick={replaceQuestionBank} disabled={replacingQuestions || saving || importingQuestions} className="btn-secondary mt-5 w-full justify-center disabled:cursor-wait disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${replacingQuestions ? 'animate-spin' : ''}`} />{replacingQuestions ? 'Replacing questions...' : `Replace with all ${DEFAULT_TRIVIA_QUESTIONS.length} starter questions`}</button>
+            <p className="mt-2 text-xs leading-5 text-[#28231F]/50">This replaces the Firebase bank with the starter questions. Categories and difficulty values match the playable quiz.</p>
+            <div className="mt-6 space-y-3">{questions.map(question => <div id={`question-${question.id}`} key={question.id} className="scroll-mt-24 flex items-start justify-between gap-4 rounded-xl border border-[#28231F]/8 bg-white/65 p-4"><div className="min-w-0"><p className="text-sm font-bold text-[#28231F]">{question.question_text}</p><p className="mt-1 text-xs text-[#28231F]/50">{getQuestionCategoryLabel(question.category)} · {question.difficulty}{firebaseQuestionIds.has(question.id) ? '' : ' · local question'}</p></div><div className="flex shrink-0 items-center gap-1"><button type="button" title="Edit question" aria-label={`Edit question: ${question.question_text}`} onClick={() => editQuestion(question)} className="rounded-full p-2 text-[#54417A] transition-colors hover:bg-[#54417A]/10"><Pencil className="h-4 w-4" /></button><button type="button" title={firebaseQuestionIds.has(question.id) ? 'Delete question' : 'Local question cannot be deleted here'} aria-label={`Delete question: ${question.question_text}`} disabled={!firebaseQuestionIds.has(question.id)} onClick={() => removeQuestion(question.id)} className="rounded-full p-2 text-[#C44737] transition-colors hover:bg-[#C44737]/10 disabled:cursor-not-allowed disabled:opacity-30"><Trash2 className="h-4 w-4" /></button></div></div>)}</div>
+          </section>
         </section>
 
         <form onSubmit={saveCommunityContent} className="glass-card mt-4 p-6 sm:p-8">
