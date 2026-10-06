@@ -399,29 +399,34 @@ export default function Home() {
                 <ScoreRing value={`${percentage}%`} label="Accuracy" color="#FBBC05" />
               </div>
 
-              <div className="flex w-full items-center gap-3 rounded-2xl border border-[#34A853]/20 bg-[#34A853]/8 p-4 text-left">
+              <div className="flex w-full items-start gap-3 rounded-2xl border border-[#34A853]/20 bg-[#34A853]/8 p-4 text-left">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl">{playerProgress.avatar}</span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-extrabold text-[#1E1E1E]">+{xpEarnedThisRound} explorer XP</p>
-                  <p className="mt-0.5 text-xs leading-5 text-[#1E1E1E]/55">
+                  <p className="break-words font-extrabold text-[#1E1E1E]">+{xpEarnedThisRound} explorer XP</p>
+                  <p className="mt-0.5 break-words text-xs leading-5 text-[#1E1E1E]/55">
                     Level {playerLevel} · {xpIntoLevel}/{XP_PER_LEVEL} XP to your next level
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-[#277D3E]">
+                  <p className="mt-1 break-words text-xs font-semibold text-[#277D3E]">
                     {activeRun.type === 'story' && percentage >= 60 && 'Story chapter complete! +25 XP included.'}
                     {activeRun.type === 'story' && percentage < 60 && 'Get 60% or more to complete this story chapter.'}
                     {activeRun.type === 'event' && 'Weekly spotlight rewards included when earned.'}
                     {activeRun.type !== 'story' && activeRun.type !== 'event' && 'Daily mission and streak rewards included when earned.'}
                   </p>
                 </div>
-                <ChallengeResults challengeId={competition?.challengeId ?? null} refreshToken={scoreSaveState} />
-                {competition?.shareCode && (
-                  <div className="w-full rounded-xl border border-[#3186FF]/15 bg-[#3186FF]/5 p-3 text-sm">
-                    <span className="font-semibold text-[#1E1E1E]/65">Invite a friend to this same round with code </span>
-                    <strong className="select-all tracking-wider text-[#3186FF]">{competition.shareCode}</strong>
-                  </div>
-                )}
-                <Sparkles className="h-5 w-5 shrink-0 text-[#34A853]" />
+                <Sparkles className="mt-1 h-5 w-5 shrink-0 text-[#34A853]" aria-hidden="true" />
               </div>
+
+              {(competition?.challengeId || competition?.shareCode) && (
+                <div className="grid w-full min-w-0 gap-3 text-left md:grid-cols-2">
+                  <ChallengeResults challengeId={competition?.challengeId ?? null} refreshToken={scoreSaveState} />
+                  {competition?.shareCode && (
+                    <div className="flex min-w-0 flex-col justify-center rounded-2xl border border-[#3186FF]/15 bg-[#3186FF]/5 p-4">
+                      <span className="text-sm font-semibold leading-6 text-[#1E1E1E]/65">Invite a friend to this same round with code</span>
+                      <strong className="mt-1 break-all font-extrabold tracking-wider text-[#3186FF]">{competition.shareCode}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="w-full text-left">
                 <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#1E1E1E]/45">Achievements</p>
@@ -568,7 +573,7 @@ export default function Home() {
 
         {status === 'idle' && (
         <section className="mb-8 w-full max-w-7xl overflow-hidden rounded-[2rem] border border-[#1E1E1E]/8 bg-white/70 shadow-[0_20px_60px_rgba(30,30,30,0.08)] backdrop-blur-xl">
-          <div className="relative overflow-hidden bg-[#123B2A] px-6 py-7 text-white sm:px-8 sm:py-9">
+          <div className="africa-hero px-6 py-7 text-white sm:px-8 sm:py-9">
             <div className="absolute -right-6 -top-12 h-44 w-44 rounded-full border-[24px] border-white/5" />
             <div className="absolute -bottom-16 right-24 h-40 w-40 rounded-full bg-[#34A853]/20 blur-2xl" />
             <div className="relative">

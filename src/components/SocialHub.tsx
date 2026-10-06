@@ -179,14 +179,14 @@ export function ChallengeResults({
 
   if (!challengeId) return null;
   return (
-    <section className="w-full rounded-2xl border border-[#3186FF]/15 bg-[#3186FF]/5 p-4 text-left" aria-live="polite">
+    <section className="w-full min-w-0 rounded-2xl border border-[#3186FF]/15 bg-[#3186FF]/5 p-4 text-left" aria-live="polite">
       <h2 className="font-extrabold text-[#1E1E1E]">Friend challenge results</h2>
       {error && <p className="mt-2 text-sm text-[#EA4335]">{error}</p>}
       {!scores && !error && <p className="mt-2 text-sm text-[#1E1E1E]/55">Loading challenge leaderboard…</p>}
       {scores?.map((entry, index) => (
-        <p key={`${entry.name}-${index}`} className="mt-2 flex justify-between gap-3 text-sm">
-          <span>{index + 1}. {entry.name} ({entry.correctAnswers}/{entry.totalQuestions})</span>
-          <strong>{entry.score}</strong>
+        <p key={`${entry.name}-${index}`} className="mt-2 flex min-w-0 items-start justify-between gap-3 text-sm">
+          <span className="min-w-0 break-words">{index + 1}. {entry.name} ({entry.correctAnswers}/{entry.totalQuestions})</span>
+          <strong className="shrink-0">{entry.score}</strong>
         </p>
       ))}
       {scores?.length === 0 && <p className="mt-2 text-sm text-[#1E1E1E]/55">No challenge scores submitted yet.</p>}

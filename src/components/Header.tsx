@@ -3,12 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import LoginButton from './LoginButton';
 import { Menu, X } from 'lucide-react';
 
 export default function Header() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navClass = (active: boolean) => `rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
+    active ? 'bg-[#54417A]/10 text-[#54417A]' : 'text-[#28231F]/65 hover:bg-[#54417A]/5 hover:text-[#28231F]'
+  }`;
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 8);
@@ -38,24 +43,28 @@ export default function Header() {
         <div className="hidden sm:flex items-center gap-4">
           <Link
             href="/compete"
-            className="text-sm font-medium text-[#1E1E1E]/70 hover:text-[#1E1E1E] transition-colors"
+            aria-current={pathname === '/compete' ? 'page' : undefined}
+            className={navClass(pathname === '/compete')}
           >
             Compete
           </Link>
           <Link
             href="/community"
-            className="text-sm font-medium text-[#1E1E1E]/70 hover:text-[#1E1E1E] transition-colors"
+            aria-current={pathname.startsWith('/community') ? 'page' : undefined}
+            className={navClass(pathname.startsWith('/community'))}
           >
             Community
           </Link>
           <Link
             href="/profile"
-            className="text-sm font-medium text-[#1E1E1E]/70 hover:text-[#1E1E1E] transition-colors"
+            aria-current={pathname === '/profile' ? 'page' : undefined}
+            className={navClass(pathname === '/profile')}
           >
             Profile
           </Link>
           <Link
             href="/"
+            aria-current={pathname === '/' ? 'page' : undefined}
             className="btn-primary !py-2.5 !px-5 !text-sm"
           >
             Play Now
@@ -90,6 +99,7 @@ export default function Header() {
             <Link
               href="/compete"
               onClick={() => setMobileOpen(false)}
+              aria-current={pathname === '/compete' ? 'page' : undefined}
               className="block rounded-xl px-4 py-3 text-sm font-medium text-[#1E1E1E] transition-colors hover:bg-[#1E1E1E]/5"
             >
               Compete ↗
@@ -97,6 +107,7 @@ export default function Header() {
             <Link
               href="/community"
               onClick={() => setMobileOpen(false)}
+              aria-current={pathname.startsWith('/community') ? 'page' : undefined}
               className="block px-4 py-3 rounded-xl text-sm font-medium text-[#1E1E1E] hover:bg-[#1E1E1E]/5 transition-colors"
             >
               Community ↗
@@ -104,6 +115,7 @@ export default function Header() {
             <Link
               href="/profile"
               onClick={() => setMobileOpen(false)}
+              aria-current={pathname === '/profile' ? 'page' : undefined}
               className="block rounded-xl px-4 py-3 text-sm font-medium text-[#1E1E1E] transition-colors hover:bg-[#1E1E1E]/5"
             >
               Profile ↗

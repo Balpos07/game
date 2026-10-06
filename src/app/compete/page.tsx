@@ -33,7 +33,7 @@ export default function CompetePage() {
     <div className="min-h-screen">
       <Header />
       <main className="mx-auto w-full max-w-7xl px-4 pb-16 pt-8 sm:px-6 sm:pt-12">
-        <section className="overflow-hidden rounded-[2rem] bg-[#123B2A] px-5 py-8 text-white shadow-[0_20px_60px_rgba(18,59,42,0.16)] sm:px-8 sm:py-10">
+        <section className="africa-hero rounded-[2rem] px-5 py-8 text-white shadow-[0_20px_60px_rgba(48,40,68,0.16)] sm:px-8 sm:py-10">
           <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#B8F4C8]">The social side of trivia</p>
           <div className="mt-3 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
@@ -42,7 +42,7 @@ export default function CompetePage() {
                 Challenge a friend, rally your campus crew, or climb the verified global rankings.
               </p>
             </div>
-            <a href="#social-challenges-heading" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#123B2A] transition hover:bg-white/90">
+            <a href="#social-challenges-heading" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-extrabold text-[#433653] transition hover:bg-white/90">
               Start a challenge <ArrowRight className="h-4 w-4" />
             </a>
           </div>

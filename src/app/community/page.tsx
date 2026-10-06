@@ -56,12 +56,13 @@ export default function CommunityPage() {
       <Header />
 
       <main>
-        <section className="mx-auto grid w-full max-w-7xl gap-10 px-4 pb-16 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[1fr_0.92fr] lg:items-center lg:gap-16 lg:pb-24 lg:pt-24">
+        <section className="africa-hero mx-auto mt-4 grid w-[calc(100%-2rem)] max-w-7xl gap-10 rounded-[2rem] px-5 py-8 shadow-[0_24px_70px_rgba(48,40,68,0.12)] sm:mt-6 sm:w-[calc(100%-3rem)] sm:px-8 sm:py-12 lg:grid-cols-[1fr_0.92fr] lg:items-center lg:gap-16 lg:px-12 lg:py-16">
           <div className="animate-fade-in-up">
-            <h1 className="max-w-xl text-5xl font-extrabold leading-[0.98] tracking-tight text-[#1E1E1E] sm:text-6xl lg:text-7xl">
+            <p className="mb-4 text-xs font-extrabold uppercase tracking-[0.2em] text-[#D8EBD6]">DevN&apos;Visuals community</p>
+            <h1 className="max-w-xl text-5xl font-extrabold leading-[0.98] tracking-tight text-white sm:text-6xl lg:text-7xl">
               The next good conversation is almost here.
             </h1>
-            <p className="mt-7 max-w-lg text-base leading-8 text-[#1E1E1E]/65 sm:text-lg">
+            <p className="mt-7 max-w-lg text-base leading-8 text-white/75 sm:text-lg">
               DevN&apos;Visuals community sessions are where curious people bring their questions,
               share what they are building, and leave with a few new ideas to try.
             </p>
@@ -79,7 +80,7 @@ export default function CommunityPage() {
           </div>
 
           <div className="relative animate-fade-in-up [animation-delay:120ms]">
-            <div className="absolute -right-5 -top-5 z-10 hidden h-24 w-24 rounded-full border border-[#FBBC05]/30 bg-[#FBBC05]/15 sm:block" />
+            <div className="absolute -right-5 -top-5 z-10 hidden h-24 w-24 rounded-full border border-[#E8AD38]/35 bg-[#E8AD38]/20 sm:block" />
             <div className="relative overflow-hidden rounded-[2rem] border-8 border-white/70 bg-[#1E1E1E] shadow-[0_24px_70px_rgba(30,30,30,0.18)]">
               <Image
                 src="/dnv-new.png"
@@ -94,7 +95,7 @@ export default function CommunityPage() {
               </div>
             </div>
             <div className="absolute -bottom-5 -left-3 flex items-center gap-3 rounded-2xl border border-[#1E1E1E]/8 bg-white/90 px-4 py-3 shadow-xl backdrop-blur sm:-left-8">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3186FF]/12 text-[#3186FF]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#38785A]/10 text-[#38785A]">
                 <Users className="h-5 w-5" />
               </div>
               <div>
@@ -144,7 +145,7 @@ export default function CommunityPage() {
               { label: 'Focus', value: 'Practical', detail: 'Real lessons you can apply right away' },
             ].map(stat => (
               <div key={stat.label} className="glass-card p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#3186FF]">{stat.label}</p>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#68508B]">{stat.label}</p>
                 <p className="mt-3 text-3xl font-extrabold text-[#1E1E1E]">{stat.value}</p>
                 <p className="mt-2 text-sm leading-6 text-[#1E1E1E]/55">{stat.detail}</p>
               </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
-import { Award, ArrowLeft, BarChart3, LoaderCircle, Save, User } from 'lucide-react';
+import { Award, ArrowLeft, ArrowUpRight, BarChart3, LoaderCircle, Save, User, Users } from 'lucide-react';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
@@ -12,6 +12,7 @@ import { getFirebaseDb } from '@/lib/firebase';
 
 type ProfileForm = { displayName: string; photoURL: string };
 type ScoreRecord = { uid?: string; score?: number; correctAnswers?: number; totalQuestions?: number };
+type CrewProfile = { name: string; memberCount: number };
 
 export default function ProfilePage() {
   const { user, loading: authLoading, loginWithGoogle } = useAuth();
@@ -23,29 +24,78 @@ export default function ProfilePage() {
   const [games, setGames] = useState<ScoreRecord[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const [crew, setCrew] = useState<CrewProfile | null>(null);
+  const [crewLoading, setCrewLoading] = useState(true);
+  const [crewError, setCrewError] = useState('');
 
   useEffect(() => {
     if (!user) return;
     const db = getFirebaseDb();
     if (!db) return;
+    let active = true;
     getDoc(doc(db, 'profiles', user.uid)).then(snapshot => {
+      if (!active) return;
       const profile = snapshot.data();
       setForm({ displayName: profile?.displayName || user.displayName || '', photoURL: profile?.photoURL || user.photoURL || '' });
-    });
-    return onSnapshot(collection(db, 'leaderboard'), snapshot => {
+    }).catch(error => console.error('Could not load profile details:', error));
+    const unsubscribe = onSnapshot(collection(db, 'leaderboard'), snapshot => {
       setGames(snapshot.docs.map(item => item.data() as ScoreRecord).filter(item => item.uid === user.uid));
     });
+
+    const loadCrew = async () => {
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch('/api/competition', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ action: 'my-crew' }),
+        });
+        const result = await response.json() as { crew?: CrewProfile | null; error?: string };
+        if (!response.ok) throw new Error(result.error || 'Your crew could not be loaded.');
+        if (active) setCrew(result.crew ?? null);
+      } catch (error) {
+        console.error('Could not load crew profile:', error);
+        if (active) setCrewError(error instanceof Error ? error.message : 'Your crew could not be loaded.');
+      } finally {
+        if (active) setCrewLoading(false);
+      }
+    };
+    void loadCrew();
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [user]);
 
   const saveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user || user.isAnonymous) return;
     const db = getFirebaseDb();
-    if (!db) return;
+    if (!db) {
+      setSaveError('Profile saving is unavailable because Firebase is not configured.');
+      setMessage('');
+      return;
+    }
     setSaving(true);
-    await setDoc(doc(db, 'profiles', user.uid), { ...form, uid: user.uid, updatedAt: Date.now() }, { merge: true });
-    setMessage('Profile updated.');
-    setSaving(false);
+    setMessage('');
+    setSaveError('');
+    try {
+      await setDoc(doc(db, 'profiles', user.uid), {
+        ...form,
+        displayName: form.displayName.trim(),
+        photoURL: form.photoURL.trim(),
+        uid: user.uid,
+        updatedAt: Date.now(),
+      }, { merge: true });
+      setMessage('Profile updated.');
+    } catch (error) {
+      console.error('Profile save failed:', error);
+      setSaveError(error instanceof Error ? error.message : 'Could not save your profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (authLoading) return <div className="min-h-screen"><Header /><div className="flex min-h-[60vh] items-center justify-center"><LoaderCircle className="h-6 w-6 animate-spin text-[#3186FF]" /></div></div>;
@@ -64,10 +114,29 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen"><Header /><main className="mx-auto w-full max-w-7xl px-4 pb-20 pt-10 sm:px-6 sm:pt-16"><Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-[#3186FF]"><ArrowLeft className="h-4 w-4" /> Back to trivia</Link><div className="mt-8"><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#3186FF]">Player profile</p><h1 className="mt-2 text-4xl font-extrabold text-[#1E1E1E] sm:text-6xl">Your progress, in one place.</h1></div>
+    <div className="min-h-screen"><Header /><main className="mx-auto w-full max-w-7xl px-4 pb-20 pt-10 sm:px-6 sm:pt-16"><Link href="/" className="inline-flex items-center gap-2 text-sm font-bold text-[#68508B]"><ArrowLeft className="h-4 w-4" /> Back to trivia</Link><div className="africa-hero mt-6 rounded-[2rem] px-5 py-7 text-white shadow-[0_20px_60px_rgba(48,40,68,0.12)] sm:px-8 sm:py-9"><p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#D8EBD6]">Player profile</p><h1 className="mt-2 text-3xl font-extrabold sm:text-5xl">Your progress, in one place.</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-white/75">Your trivia history, explorer level, and crew all together.</p></div>
       <section className="mt-10 grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
         <form onSubmit={saveProfile} className="glass-card p-6 sm:p-8"><div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-[#3186FF]/12 text-2xl font-extrabold text-[#3186FF]">{form.photoURL ? <img src={form.photoURL} alt="Profile" className="h-full w-full object-cover" /> : (form.displayName || user.email || 'P').charAt(0).toUpperCase()}</div><h2 className="mt-6 text-xl font-extrabold text-[#1E1E1E]">Profile details</h2><label className="mt-5 block text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">Display name<input value={form.displayName} onChange={event => setForm({ ...form, displayName: event.target.value })} className="mt-2 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm normal-case tracking-normal outline-none" /></label><label className="mt-4 block text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">Photo URL<input type="url" value={form.photoURL} onChange={event => setForm({ ...form, photoURL: event.target.value })} className="mt-2 w-full rounded-xl border border-[#1E1E1E]/10 bg-white/70 p-3 text-sm normal-case tracking-normal outline-none" /></label><button disabled={saving} className="btn-primary mt-5 w-full disabled:opacity-50"><Save className="h-4 w-4" /> {saving ? 'Saving...' : 'Save profile'}</button>{message && <p className="mt-3 text-sm text-[#34A853]">{message}</p>}</form>
         <div><div className="grid gap-3 sm:grid-cols-2"><div className="glass-card p-5"><BarChart3 className="h-5 w-5 text-[#3186FF]" /><p className="mt-6 text-3xl font-extrabold text-[#1E1E1E]">{progress.gamesPlayed || games.length}</p><p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">Games played</p></div><div className="glass-card p-5"><Award className="h-5 w-5 text-[#FBBC05]" /><p className="mt-6 text-3xl font-extrabold text-[#1E1E1E]">{bestScore}</p><p className="mt-1 text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">Best score</p></div><div className="glass-card p-5"><p className="text-2xl font-extrabold text-[#34A853]">{accuracy}%</p><p className="mt-3 text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">Accuracy</p></div><div className="glass-card p-5"><p className="text-2xl font-extrabold text-[#EA4335]">{averageScore}</p><p className="mt-3 text-xs font-bold uppercase tracking-wider text-[#1E1E1E]/45">Average score</p></div></div><div className="glass-card mt-4 p-5"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#3186FF]">Achievements</p><div className="mt-4 grid grid-cols-2 gap-2">{badges.map(([label, unlocked]) => <div key={label as string} className={`rounded-xl border p-3 text-sm font-bold ${unlocked ? 'border-[#FBBC05]/30 bg-[#FBBC05]/10 text-[#1E1E1E]' : 'border-[#1E1E1E]/8 text-[#1E1E1E]/30'}`}>{label as string}</div>)}</div></div></div>
+      </section>
+      {saveError && <p role="alert" className="mt-3 rounded-xl border border-[#C44737]/15 bg-[#C44737]/5 p-3 text-sm text-[#9F2C23]">{saveError}</p>}
+      <section aria-labelledby="crew-profile-heading" className="glass-card mt-4 p-6 sm:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#38785A]/10 text-[#38785A]"><Users className="h-6 w-6" /></span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#38785A]">Your people</p>
+              <h2 id="crew-profile-heading" className="mt-1 text-xl font-extrabold text-[#28231F]">Campus crew</h2>
+              {crewLoading && <p className="mt-1 text-sm text-[#28231F]/55">Checking your crew membership…</p>}
+              {!crewLoading && crew && <p className="mt-1 text-sm text-[#28231F]/65">{crew.name} · {crew.memberCount} {crew.memberCount === 1 ? 'member' : 'members'}</p>}
+              {!crewLoading && !crew && !crewError && <p className="mt-1 text-sm text-[#28231F]/55">You haven’t joined a crew yet.</p>}
+              {crewError && <p role="status" className="mt-1 text-sm text-[#C44737]">{crewError}</p>}
+            </div>
+          </div>
+          <Link href="/compete" className="btn-secondary min-h-11 shrink-0 !py-2.5 !text-sm">
+            {crew ? 'Manage crew' : 'Find or create a crew'} <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </div>
       </section>
       <section className="glass-card mt-4 p-6 sm:p-8">
         <div className="flex items-start justify-between gap-4">

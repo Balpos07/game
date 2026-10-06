@@ -1,32 +1,32 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Plus Jakarta Sans", var(--font-outfit), sans-serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
 
   /* DevN'Visuals Brand Colors */
-  --color-dnv-bg: #FCF4F4;
-  --color-dnv-bg2: #FDF4F5;
-  --color-gdg-blue: #3186FF;
-  --color-gdg-blue-light: #6D97FF;
-  --color-gdg-purple: #A9A8FF;
-  --color-gdg-red: #EA4335;
-  --color-gdg-green: #34A853;
-  --color-gdg-yellow: #FBBC05;
-  --color-dnv-dark: #1E1E1E;
+  --color-dnv-bg: #FFF9F0;
+  --color-dnv-bg2: #FFF3E5;
+  --color-gdg-blue: #54417A;
+  --color-gdg-blue-light: #8170A8;
+  --color-gdg-purple: #9A77B5;
+  --color-gdg-red: #D65D42;
+  --color-gdg-green: #38785A;
+  --color-gdg-yellow: #E8AD38;
+  --color-dnv-dark: #28231F;
 
   /* Semantic */
-  --color-primary: #3186FF;
-  --color-success: #34A853;
-  --color-danger: #EA4335;
-  --color-warning: #FBBC05;
-  --color-purple: #8a2be2;
+  --color-primary: #C64F31;
+  --color-success: #38785A;
+  --color-danger: #C44737;
+  --color-warning: #D89B22;
+  --color-purple: #68508B;
 }
 
 @layer base {
   :root {
-    --background: #FCF4F4;
-    --foreground: #1E1E1E;
+    --background: #FFF9F0;
+    --foreground: #28231F;
     --card: #FFFFFF;
     --border: rgba(30, 30, 30, 0.1);
     --muted: rgba(30, 30, 30, 0.6);
@@ -40,6 +40,49 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+  color: var(--foreground);
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse at 8% 4%, rgba(239, 169, 104, 0.12), transparent 34rem),
+    radial-gradient(ellipse at 94% 48%, rgba(119, 94, 157, 0.09), transparent 38rem),
+    linear-gradient(180deg, #fffaf3 0%, #fff8ef 55%, #fff9f2 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before,
+body::after {
+  position: fixed;
+  z-index: -1;
+  width: min(42vw, 38rem);
+  aspect-ratio: 1;
+  border-radius: 58% 42% 38% 62% / 46% 38% 62% 54%;
+  content: "";
+  filter: blur(62px);
+  opacity: 0.24;
+  pointer-events: none;
+}
+
+body::before {
+  top: -14rem;
+  right: -12rem;
+  background: radial-gradient(circle at 36% 38%, #E96C4B 0%, #E96C4B 24%, #E9AF45 58%, transparent 72%);
+  transform: rotate(-24deg);
+}
+
+body::after {
+  bottom: -17rem;
+  left: -13rem;
+  background: radial-gradient(circle at 55% 42%, #597A5A 0%, #597A5A 22%, #65518B 56%, transparent 73%);
+  transform: rotate(18deg);
 }
 
 *:focus-visible {
@@ -62,20 +105,58 @@ html {
   }
 }
 
-body {
-  color: var(--foreground);
-  background-color: var(--background);
-  background-image: radial-gradient(
-    85.98% 85.98% at 50% 17.07%,
-    #FCF4F4 52%,
-    #FFF7FA 76%,
-    #FFC4C2 100%
-  );
-  background-attachment: fixed;
-  min-height: 100vh;
-  font-family: "Plus Jakarta Sans", var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@media (max-width: 640px) {
+  body::before,
+  body::after {
+    width: 78vw;
+    filter: blur(48px);
+    opacity: 0.17;
+  }
+
+  body::before {
+    top: -9rem;
+    right: -12rem;
+  }
+
+  body::after {
+    bottom: -12rem;
+    left: -13rem;
+  }
+}
+
+.africa-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 78% 12%, rgba(218, 111, 68, 0.33), transparent 34%),
+    radial-gradient(ellipse at 12% 100%, rgba(79, 115, 83, 0.44), transparent 42%),
+    linear-gradient(118deg, #302844 0%, #49345F 54%, #714452 100%);
+}
+
+.africa-hero::before,
+.africa-hero::after {
+  position: absolute;
+  z-index: -1;
+  width: clamp(10rem, 27vw, 23rem);
+  aspect-ratio: 1;
+  border-radius: 58% 42% 38% 62% / 46% 38% 62% 54%;
+  content: "";
+  pointer-events: none;
+}
+
+.africa-hero::before {
+  top: -58%;
+  right: 3%;
+  background: radial-gradient(circle at 38% 42%, rgba(237, 174, 71, 0.9), rgba(224, 104, 66, 0.8) 55%, rgba(224, 104, 66, 0.08) 72%);
+  transform: rotate(-25deg);
+}
+
+.africa-hero::after {
+  right: 29%;
+  bottom: -92%;
+  background: radial-gradient(circle at 43% 35%, rgba(77, 151, 110, 0.75), rgba(80, 116, 145, 0.55) 58%, rgba(80, 116, 145, 0.02) 73%);
+  transform: rotate(19deg);
 }
 
 /* ── DevN'Visuals Button Variants ── */
@@ -93,12 +174,7 @@ body {
   border: none;
   outline: none;
   transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
-  background: radial-gradient(
-    85.98% 85.98% at 50% 17.07%,
-    #3186FF 52%,
-    #6D97FF 76%,
-    #A9A8FF 100%
-  );
+  background: linear-gradient(115deg, #B9472D 0%, #D46437 54%, #E2943B 100%);
   color: #fff;
   &:hover:not(:active) {
     transform: scale(1.03);
@@ -121,7 +197,7 @@ body {
   cursor: pointer;
   border: none;
   outline: none;
-  background: #1E1E1E;
+  background: #433653;
   color: #fff;
   transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 150ms ease;
   &:hover:not(:active) {

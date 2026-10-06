@@ -20,7 +20,7 @@ export function useQuestionBank() {
     return onSnapshot(collection(db, 'questions'), snapshot => {
       const questionsById = new Map(DEFAULT_TRIVIA_QUESTIONS.map(question => [question.id, question]));
       snapshot.docs.forEach(document => {
-        const question = { id: document.id, ...document.data() } as Question;
+        const question = { ...document.data(), id: document.id } as Question;
         questionsById.set(question.id, question);
       });
       setQuestions([...questionsById.values()]);

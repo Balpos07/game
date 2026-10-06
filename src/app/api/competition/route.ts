@@ -147,6 +147,30 @@ export async function POST(request: Request) {
       return Response.json(result);
     }
 
+    if (payload.action === 'my-crew') {
+      const profileSnapshot = await db.collection('profiles').doc(user.uid).get();
+      const crewId = profileSnapshot.data()?.crewId;
+      if (typeof crewId !== 'string') return Response.json({ crew: null });
+
+      const crewRef = db.collection('crews').doc(crewId);
+      const [crewSnapshot, membershipSnapshot] = await Promise.all([
+        crewRef.get(),
+        crewRef.collection('members').doc(user.uid).get(),
+      ]);
+      if (!crewSnapshot.exists || !membershipSnapshot.exists) {
+        return Response.json({ error: 'Your crew membership could not be found.' }, { status: 404 });
+      }
+
+      const crew = crewSnapshot.data()!;
+      return Response.json({
+        crew: {
+          id: crewRef.id,
+          name: crew.name,
+          memberCount: crew.memberCount,
+        },
+      });
+    }
+
     if (payload.action === 'crew-board') {
       const profileSnapshot = await db.collection('profiles').doc(user.uid).get();
       const crewId = profileSnapshot.data()?.crewId;

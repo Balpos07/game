@@ -27,10 +27,10 @@ const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 
 // ── GDG four colour palette per option index ────────────────────────────────
 const GDG_COLORS = [
-  { light: 'rgba(49,134,255,0.12)', border: 'rgba(49,134,255,0.35)', dark: '#3186FF', labelBg: '#3186FF' },
-  { light: 'rgba(234,67,53,0.12)',  border: 'rgba(234,67,53,0.35)',  dark: '#EA4335', labelBg: '#EA4335' },
-  { light: 'rgba(251,188,5,0.12)',  border: 'rgba(251,188,5,0.35)',  dark: '#FBBC05', labelBg: '#FBBC05' },
-  { light: 'rgba(52,168,83,0.12)',  border: 'rgba(52,168,83,0.35)',  dark: '#34A853', labelBg: '#34A853' },
+  { light: 'rgba(84,65,122,0.10)', border: 'rgba(84,65,122,0.32)', dark: '#54417A', labelBg: '#54417A' },
+  { light: 'rgba(214,93,66,0.10)', border: 'rgba(214,93,66,0.32)', dark: '#B7442D', labelBg: '#D65D42' },
+  { light: 'rgba(232,173,56,0.14)', border: 'rgba(190,130,28,0.38)', dark: '#76520D', labelBg: '#E8AD38' },
+  { light: 'rgba(56,120,90,0.10)', border: 'rgba(56,120,90,0.32)', dark: '#38785A', labelBg: '#38785A' },
 ];
 
 // ── Difficulty badge ─────────────────────────────────────────────────────────
@@ -250,7 +250,7 @@ export default function QuizEngine() {
             <div className="dnv-progress">
               <motion.div
                 className="h-full rounded-full"
-                style={{ background: 'linear-gradient(90deg, #3186FF, #6D97FF)' }}
+                style={{ background: 'linear-gradient(90deg, #D65D42, #E8AD38, #38785A)' }}
                 initial={false}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -261,7 +261,7 @@ export default function QuizEngine() {
           {/* Score */}
           <div className="glass-card px-4 py-2 flex flex-col items-center relative shrink-0">
             <span className="text-[10px] font-bold text-[#1E1E1E]/40 uppercase tracking-widest leading-none mb-0.5">Score</span>
-            <span className="text-lg font-bold text-[#3186FF] leading-none">{score}</span>
+            <span className="text-lg font-bold text-[#54417A] leading-none">{score}</span>
 
             <AnimatePresence>
               {currentStreak >= 3 && (
