@@ -1,6 +1,19 @@
 export type QuestionCategory = 'world_capitals' | 'geography' | 'landmarks' | 'history' | 'technology' | 'nigerian_culture';
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
+export const QUESTION_CATEGORIES: readonly { value: QuestionCategory; label: string }[] = [
+  { value: 'nigerian_culture', label: 'Nigerian culture' },
+  { value: 'history', label: 'Nigerian history' },
+  { value: 'technology', label: 'Technology' },
+  { value: 'geography', label: 'Geography' },
+  { value: 'world_capitals', label: 'World capitals' },
+  { value: 'landmarks', label: 'Landmarks' },
+];
+
+export function getQuestionCategoryLabel(category: QuestionCategory): string {
+  return QUESTION_CATEGORIES.find(option => option.value === category)?.label ?? category.replaceAll('_', ' ');
+}
+
 export interface Question {
   id: string;
   category: QuestionCategory;

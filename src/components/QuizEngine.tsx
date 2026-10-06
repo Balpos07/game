@@ -18,6 +18,7 @@ import { twMerge } from 'tailwind-merge';
 import { addDoc, collection } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
+import { getQuestionCategoryLabel } from '@/types/quiz';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -307,7 +308,7 @@ export default function QuizEngine() {
           {/* Category + difficulty */}
           <div className="flex items-center gap-2 flex-wrap relative z-10">
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#1E1E1E]/5 text-[#1E1E1E]/60 border border-[#1E1E1E]/8 capitalize">
-              {currentQuestion.category.replace(/_/g, ' ')}
+              {getQuestionCategoryLabel(currentQuestion.category)}
             </span>
             <span className={cn(
               'px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border',
