@@ -1,4 +1,4 @@
-export type QuestionCategory = 'world_capitals' | 'geography' | 'landmarks' | 'history' | 'technology';
+export type QuestionCategory = 'world_capitals' | 'geography' | 'landmarks' | 'history' | 'technology' | 'nigerian_culture';
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 
 export interface Question {
@@ -27,6 +27,7 @@ export interface QuizState {
   currentStreak: number;
   bestStreak: number;
   status: 'idle' | 'playing' | 'finished';
+  competition: { challengeId: string; shareCode: string } | null;
   lifelines: Lifelines;
   answers: {
     questionId: string;
@@ -38,6 +39,7 @@ export interface QuizState {
   
   // Actions
   startQuiz: (questions: Question[]) => void;
+  setCompetition: (competition: { challengeId: string; shareCode: string } | null) => void;
   submitAnswer: (questionId: string, selectedOptionIndex: number, timeRemainingSecs: number, totalTimeLimitSecs: number) => void;
   nextQuestion: () => void;
   activateFiftyFifty: () => void;

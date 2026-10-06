@@ -12,6 +12,7 @@ type LeaderboardEntry = {
   name: string;
   score: number;
   date: number;
+  verified?: boolean;
   photoURL?: string;
   uid?: string;
 };
@@ -41,7 +42,9 @@ export default function Leaderboard() {
     const unsub = onSnapshot(
       collection(db, 'leaderboard'),
       snapshot => {
-        setScores(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LeaderboardEntry[]);
+        setScores(snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }) as LeaderboardEntry)
+          .filter(entry => entry.verified === true) as LeaderboardEntry[]);
         setError(false);
         setLoading(false);
       },
@@ -72,7 +75,7 @@ export default function Leaderboard() {
   const currentUserEntry = currentUserRank > 10 ? filteredScores[currentUserRank - 1] : null;
 
   return (
-    <div className="glass-card mx-auto w-full max-w-lg p-4 sm:p-6 md:p-8">
+    <div className="glass-card mx-auto w-full max-w-7xl p-4 sm:p-6 md:p-8">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div

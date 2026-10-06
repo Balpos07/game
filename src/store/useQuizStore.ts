@@ -18,6 +18,7 @@ export const useQuizStore = create<QuizState>((set) => ({
   currentStreak: 0,
   bestStreak: 0,
   status: 'idle',
+  competition: null,
   answers: [],
   lifelines: { fiftyFiftyUsed: false, addTimeUsed: false },
 
@@ -29,9 +30,12 @@ export const useQuizStore = create<QuizState>((set) => ({
     currentStreak: 0,
     bestStreak: 0,
     status: 'playing',
+    competition: null,
     answers: [],
     lifelines: { fiftyFiftyUsed: false, addTimeUsed: false },
   }),
+
+  setCompetition: (competition) => set({ competition }),
 
   submitAnswer: (questionId, selectedOptionIndex, timeRemainingSecs, totalTimeLimitSecs) => set((state) => {
     const question = state.questions.find(q => q.id === questionId);
@@ -95,6 +99,7 @@ export const useQuizStore = create<QuizState>((set) => ({
     currentStreak: 0,
     bestStreak: 0,
     status: 'idle',
+    competition: null,
     answers: [],
     lifelines: { fiftyFiftyUsed: false, addTimeUsed: false },
   }),

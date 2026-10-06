@@ -36,8 +36,38 @@ service cloud.firestore {
 
     match /leaderboard/{entryId} {
       allow read: if true;
+      allow write: if false;
+    }
+
+    match /questionReports/{reportId} {
       allow create: if isGoogleUser()
-        && request.resource.data.uid == request.auth.uid;
+        && request.resource.data.keys().hasOnly(['questionId', 'reason', 'details', 'uid', 'name', 'status', 'createdAt'])
+        && request.resource.data.questionId is string
+        && request.resource.data.questionId.size() > 0
+        && request.resource.data.questionId.size() <= 100
+        && request.resource.data.reason in ['incorrect_answer', 'ambiguous', 'outdated', 'typo', 'other']
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 500
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt is int;
+      allow read: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /gameEvents/{eventId} {
+      allow create: if isGoogleUser()
+        && request.resource.data.keys().hasOnly(['uid', 'eventType', 'category', 'dateKey', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.eventType in ['round_started', 'round_completed', 'challenge_created', 'challenge_joined']
+        && request.resource.data.category is string
+        && request.resource.data.category.size() <= 40
+        && request.resource.data.dateKey is string
+        && request.resource.data.dateKey.size() == 10
+        && request.resource.data.createdAt is int;
+      allow read: if isAdmin();
       allow update, delete: if false;
     }
 

@@ -37,6 +37,12 @@ export default function Header() {
         {/* Desktop right side */}
         <div className="hidden sm:flex items-center gap-4">
           <Link
+            href="/compete"
+            className="text-sm font-medium text-[#1E1E1E]/70 hover:text-[#1E1E1E] transition-colors"
+          >
+            Compete
+          </Link>
+          <Link
             href="/community"
             className="text-sm font-medium text-[#1E1E1E]/70 hover:text-[#1E1E1E] transition-colors"
           >
@@ -68,6 +74,8 @@ export default function Header() {
           <button
             onClick={() => setMobileOpen(v => !v)}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
             className="flex h-9 w-9 items-center justify-center rounded-full border border-[#1E1E1E]/10 bg-white/70 text-[#1E1E1E] transition-colors hover:bg-white"
           >
             {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -77,22 +85,32 @@ export default function Header() {
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <div className="sm:hidden mx-4 mb-3 rounded-2xl border border-[#1E1E1E]/8 bg-white/90 backdrop-blur shadow-lg overflow-hidden">
+        <div id="mobile-navigation" className="sm:hidden mx-4 mb-3 rounded-2xl border border-[#1E1E1E]/8 bg-white/90 backdrop-blur shadow-lg overflow-hidden">
           <div className="flex flex-col p-2 gap-1">
             <Link
+              href="/compete"
+              onClick={() => setMobileOpen(false)}
+              className="block rounded-xl px-4 py-3 text-sm font-medium text-[#1E1E1E] transition-colors hover:bg-[#1E1E1E]/5"
+            >
+              Compete ↗
+            </Link>
+            <Link
               href="/community"
+              onClick={() => setMobileOpen(false)}
               className="block px-4 py-3 rounded-xl text-sm font-medium text-[#1E1E1E] hover:bg-[#1E1E1E]/5 transition-colors"
             >
               Community ↗
             </Link>
             <Link
               href="/profile"
+              onClick={() => setMobileOpen(false)}
               className="block rounded-xl px-4 py-3 text-sm font-medium text-[#1E1E1E] transition-colors hover:bg-[#1E1E1E]/5"
             >
               Profile ↗
             </Link>
             <Link
               href="/"
+              onClick={() => setMobileOpen(false)}
               className="btn-primary mx-2 my-1 text-sm"
             >
               Play Now

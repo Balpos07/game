@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { addDoc, collection } from 'firebase/firestore';
+import { getFirebaseDb } from '@/lib/firebase';
+import { useAuth } from '@/hooks/useAuth';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -102,6 +105,11 @@ export default function QuizEngine() {
   });
 
   const { playCorrect, playIncorrect, playTick } = useSoundEffects();
+  const { user, loginWithGoogle } = useAuth();
+  const [reportReason, setReportReason] = useState('incorrect_answer');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportState, setReportState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [reportMessage, setReportMessage] = useState('');
 
   const handleAnswer = (index: number) => {
     if (isAnswered || eliminatedOptions.includes(index)) return;
@@ -148,6 +156,9 @@ export default function QuizEngine() {
       setSelectedOption(null);
       setIsAnswered(false);
       setEliminatedOptions([]);
+      setReportState('idle');
+      setReportDetails('');
+      setReportMessage('');
     });
 
     return () => window.cancelAnimationFrame(frameId);
@@ -180,13 +191,46 @@ export default function QuizEngine() {
     addTime(10);
   };
 
+  const submitQuestionReport = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user || user.isAnonymous) {
+      setReportMessage('Sign in with Google to report a question.');
+      return;
+    }
+    const db = getFirebaseDb();
+    if (!db || !currentQuestion) {
+      setReportState('error');
+      setReportMessage('Question reporting is unavailable right now.');
+      return;
+    }
+    setReportState('sending');
+    setReportMessage('');
+    try {
+      await addDoc(collection(db, 'questionReports'), {
+        questionId: currentQuestion.id,
+        reason: reportReason,
+        details: reportDetails.trim(),
+        uid: user.uid,
+        name: user.displayName || 'Player',
+        status: 'open',
+        createdAt: Date.now(),
+      });
+      setReportState('sent');
+      setReportMessage('Thanks. Your report has been sent to the review team.');
+    } catch (error) {
+      console.error('Question report submission failed:', error);
+      setReportState('error');
+      setReportMessage('Could not submit the report. Please try again later.');
+    }
+  };
+
   if (status !== 'playing' || !currentQuestion) return null;
 
   const isCorrect = selectedOption === currentQuestion.correct_option_index;
   const progress = ((currentQuestionIndex) / questions.length) * 100;
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col gap-5" aria-live="polite">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-5" aria-live="polite">
 
       {/* ── Top bar ── */}
       <div className="flex items-center justify-between gap-3">
@@ -441,6 +485,33 @@ export default function QuizEngine() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <details className="rounded-xl border border-[#1E1E1E]/8 bg-white/60 px-4 py-3">
+        <summary className="cursor-pointer text-xs font-bold text-[#1E1E1E]/60">Report a problem with this question</summary>
+        <form onSubmit={submitQuestionReport} className="mt-3 space-y-3">
+          <label className="block text-xs font-semibold text-[#1E1E1E]/65">
+            What needs review?
+            <select value={reportReason} onChange={event => setReportReason(event.target.value)} className="mt-1.5 w-full rounded-lg border border-[#1E1E1E]/15 bg-white px-3 py-2 text-sm text-[#1E1E1E]">
+              <option value="incorrect_answer">Incorrect answer</option>
+              <option value="ambiguous">Ambiguous question</option>
+              <option value="outdated">Outdated information</option>
+              <option value="typo">Typo or formatting</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label className="block text-xs font-semibold text-[#1E1E1E]/65">
+            Details (optional)
+            <textarea value={reportDetails} onChange={event => setReportDetails(event.target.value)} maxLength={500} rows={2} className="mt-1.5 w-full rounded-lg border border-[#1E1E1E]/15 bg-white px-3 py-2 text-sm text-[#1E1E1E]" />
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="submit" disabled={reportState === 'sending' || reportState === 'sent'} className="btn-secondary disabled:opacity-50">
+              {reportState === 'sending' ? 'Sending…' : reportState === 'sent' ? 'Report sent' : 'Send report'}
+            </button>
+            {(!user || user.isAnonymous) && <button type="button" onClick={loginWithGoogle} className="text-xs font-bold text-[#3186FF]">Sign in</button>}
+            {reportMessage && <span role="status" className={`text-xs ${reportState === 'error' ? 'text-[#EA4335]' : 'text-[#1E1E1E]/60'}`}>{reportMessage}</span>}
+          </div>
+        </form>
+      </details>
     </div>
   );
 }
