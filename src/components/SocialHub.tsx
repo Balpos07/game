@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import type { Question, QuestionCategory } from '@/types/quiz';
@@ -6,6 +6,21 @@ import { getFirebaseAuth } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 
 type SocialScore = { name: string; score: number; correctAnswers: number; totalQuestions: number };
+
+async function readJsonResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
+  const rawText = await response.text();
+  if (!rawText.trim()) {
+    if (!response.ok) throw new Error(fallbackMessage);
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(rawText) as T;
+  } catch {
+    if (!response.ok) throw new Error(fallbackMessage);
+    throw new Error('The server returned an unexpected response.');
+  }
+}
 
 async function postCompetition(action: string, values: Record<string, unknown> = {}) {
   const user = getFirebaseAuth()?.currentUser;
@@ -16,7 +31,7 @@ async function postCompetition(action: string, values: Record<string, unknown> =
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ action, ...values }),
   });
-  const data = await response.json() as { error?: string };
+  const data = await readJsonResponse<{ error?: string }>(response, 'The social challenge could not be completed.');
   if (!response.ok) throw new Error(data.error || 'The social challenge could not be completed.');
   return data;
 }
@@ -193,3 +208,5 @@ export function ChallengeResults({
     </section>
   );
 }
+
+

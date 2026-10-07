@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -13,6 +13,21 @@ import { getFirebaseDb } from '@/lib/firebase';
 type ProfileForm = { displayName: string; photoURL: string };
 type ScoreRecord = { uid?: string; score?: number; correctAnswers?: number; totalQuestions?: number };
 type CrewProfile = { name: string; memberCount: number };
+
+async function readJsonResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
+  const rawText = await response.text();
+  if (!rawText.trim()) {
+    if (!response.ok) throw new Error(fallbackMessage);
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(rawText) as T;
+  } catch {
+    if (!response.ok) throw new Error(fallbackMessage);
+    throw new Error('The server returned an unexpected response.');
+  }
+}
 
 export default function ProfilePage() {
   const { user, loading: authLoading, loginWithGoogle } = useAuth();
@@ -51,7 +66,7 @@ export default function ProfilePage() {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ action: 'my-crew' }),
         });
-        const result = await response.json() as { crew?: CrewProfile | null; error?: string };
+        const result = await readJsonResponse<{ crew?: CrewProfile | null; error?: string }>(response, 'Your crew could not be loaded.');
         if (!response.ok) throw new Error(result.error || 'Your crew could not be loaded.');
         if (active) setCrew(result.crew ?? null);
       } catch (error) {
@@ -174,3 +189,5 @@ export default function ProfilePage() {
     </main></div>
   );
 }
+
+

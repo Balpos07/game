@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -12,6 +12,7 @@ import { ChallengeResults } from '@/components/SocialHub';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
+
 import { useQuestionBank } from '@/hooks/useQuestionBank';
 import { trackGameEvent } from '@/lib/gameEvents';
 import {
@@ -26,6 +27,21 @@ import {
 import { DAILY_MISSIONS, getWeeklyEvent, STORY_QUESTS, TRIVIA_LOCATIONS } from '@/lib/gameContent';
 import { getFirebaseAuth, isFirebaseConfigured } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
+
+async function readJsonResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
+  const rawText = await response.text();
+  if (!rawText.trim()) {
+    if (!response.ok) throw new Error(fallbackMessage);
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(rawText) as T;
+  } catch {
+    if (!response.ok) throw new Error(fallbackMessage);
+    throw new Error('The server returned an unexpected response.');
+  }
+}
 
 function DnvWordMark() {
   return (
@@ -269,7 +285,7 @@ export default function Home() {
           ...(competition?.challengeId ? { challengeId: competition.challengeId } : {}),
         }),
       });
-      const result = await response.json() as { error?: string };
+      const result = await readJsonResponse<{ error?: string }>(response, 'Unable to submit this score.');
       if (!response.ok) throw new Error(result.error || 'Unable to submit this score.');
     };
 
@@ -854,3 +870,5 @@ export default function Home() {
     </div>
   );
 }
+
+
